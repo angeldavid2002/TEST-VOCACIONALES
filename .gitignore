@@ -161,3 +161,4 @@ cython_debug/
 
 #my stuff
 descripcion_base_de_datos.txt
+database.db

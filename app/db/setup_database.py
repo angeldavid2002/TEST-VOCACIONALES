@@ -1,17 +1,17 @@
 import os
 from .database import engine, SessionLocal
-from ..schemas.base import Base
+from ..schemas.sch_base import Base
 
 # Importar todos los modelos
-from ..schemas.ciudad import Ciudad
-from ..schemas.institucion import Institucion
-from ..schemas.usuario import Usuario
-from ..schemas.test import Test
-from ..schemas.pregunta import Pregunta
-from ..schemas.respuesta import Respuesta
-from ..schemas.respuesta_usuario import RespuestaDeUsuario
-from ..schemas.vocacion_usuario import VocacionDeUsuarioPorTest
-from ..schemas.resena import Resena
+from ..schemas.sch_ciudad import Ciudad
+from ..schemas.sch_institucion import Institucion
+from ..schemas.sch_usuario import Usuario
+from ..schemas.sch_test import Test
+from ..schemas.sch_pregunta import Pregunta
+from ..schemas.sch_respuesta import Respuesta
+from ..schemas.sch_respuesta_usuario import RespuestaDeUsuario
+from ..schemas.sch_vocacion_usuario import VocacionDeUsuarioPorTest
+from ..schemas.sch_resena import Resena
 
 from datetime import datetime, timezone
 
@@ -66,7 +66,36 @@ def initialize_database():
     for ciudad in ciudades:
         ciudad_obj = Ciudad(**ciudad)
         session.add(ciudad_obj)
+     # Obtener la ciudad de Valledupar para asociarla a las instituciones
+    valledupar = session.query(Ciudad).filter_by(nombre="Valledupar").first()
 
+    # Insertar instituciones (colegios) en Valledupar
+    colegios_valledupar = [
+        {
+            "nombre": "Colegio Nacional Loperena",
+            "direccion": "Calle 14 # 11-50, Valledupar",
+            "telefono": "3201234567",
+        },
+        {
+            "nombre": "Institución Educativa CASD Simón Bolívar",
+            "direccion": "Carrera 19 # 6-20, Valledupar",
+            "telefono": "3019876543",
+        },
+        {
+            "nombre": "Colegio Gimnasio del Norte",
+            "direccion": "Avenida Fundación # 21-10, Valledupar",
+            "telefono": "3124567890",
+        },
+    ]
+
+    for colegio in colegios_valledupar:
+        institucion_obj = Institucion(
+            nombre=colegio["nombre"],
+            direccion=colegio["direccion"],
+            telefono=colegio["telefono"],
+        )
+        session.add(institucion_obj)
+    
     # Insertar usuario administrador
     admin = Usuario(
         email="admin@universidadcesar.edu.co",

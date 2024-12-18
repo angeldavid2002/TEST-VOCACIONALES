@@ -4,6 +4,8 @@ class UsuarioBase(BaseModel):
     nombre: str
     email: str
     tipo_usuario: str
+    ciudad:int
+    institucion:int
 
 class UsuarioCreate(UsuarioBase):
     contrasena: str
@@ -15,4 +17,4 @@ class Usuario(UsuarioBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

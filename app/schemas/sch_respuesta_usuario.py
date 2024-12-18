@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from .base import Base
+from .sch_base import Base
 
 class RespuestaDeUsuario(Base):
     __tablename__ = "respuestas_de_usuario"

@@ -1,7 +1,17 @@
 from passlib.context import CryptContext
-from jose import JWTError, jwt
+from jose import jwt
 from datetime import datetime, timedelta
 from ..config import config
+
+print("JWT")
+print(f"SECRET_KEY: {config.SECRET_KEY}")
+print(f"ALGORITHM: {config.ALGORITHM}")
+print(f"ACCESS_TOKEN_EXPIRE_MINUTES: {config.ACCESS_TOKEN_EXPIRE_MINUTES}")
+print("HASHING")
+print(f"HASHING_SCHEMES: {config.HASHING_SCHEMES}")
+print(f"HASHING_DEPRECATED: {config.HASHING_DEPRECATED}")
+print("SQLITE")
+print(f"DATABASE_URL: {config.DATABASE_URL}")
 
 # Configuración del hashing
 pwd_context = CryptContext(schemes=[config.HASHING_SCHEMES], deprecated=config.HASHING_DEPRECATED)

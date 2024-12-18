@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, Date, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .base import Base
+from .sch_base import Base
 
 class Resena(Base):
     __tablename__ = "resenas"

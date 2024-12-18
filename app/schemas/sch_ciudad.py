@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float
-from .base import Base
+from .sch_base import Base
 
 class Ciudad(Base):
     __tablename__ = "ciudades"
