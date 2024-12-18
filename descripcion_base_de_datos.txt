@@ -1,0 +1,89 @@
+CREATE TABLE ciudades (
+	id INTEGER NOT NULL, 
+	nombre VARCHAR NOT NULL, 
+	latitud FLOAT NOT NULL, 
+	longitud FLOAT NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (nombre)
+)
+
+CREATE TABLE instituciones (
+	id INTEGER NOT NULL, 
+	nombre VARCHAR NOT NULL, 
+	direccion VARCHAR NOT NULL, 
+	telefono VARCHAR NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+CREATE TABLE tests (
+	id INTEGER NOT NULL, 
+	nombre VARCHAR NOT NULL, 
+	descripcion VARCHAR NOT NULL, 
+	fecha_creacion DATE, 
+	fecha_actualizacion DATE, 
+	PRIMARY KEY (id)
+)
+
+CREATE TABLE usuarios (
+	id INTEGER NOT NULL, 
+	nombre VARCHAR NOT NULL, 
+	email VARCHAR NOT NULL, 
+	contrasena VARCHAR NOT NULL, 
+	tipo_usuario VARCHAR NOT NULL, 
+	id_ciudad INTEGER, 
+	id_institucion INTEGER, 
+	fecha_registro DATE, 
+	PRIMARY KEY (id), 
+	UNIQUE (email), 
+	FOREIGN KEY(id_ciudad) REFERENCES ciudades (id), 
+	FOREIGN KEY(id_institucion) REFERENCES instituciones (id)
+)
+
+CREATE TABLE preguntas (
+	id INTEGER NOT NULL, 
+	test_id INTEGER NOT NULL, 
+	enunciado VARCHAR NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(test_id) REFERENCES tests (id)
+)
+
+CREATE TABLE respuestas (
+	id INTEGER NOT NULL, 
+	pregunta_id INTEGER NOT NULL, 
+	respuesta VARCHAR NOT NULL, 
+	vocacion VARCHAR NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(pregunta_id) REFERENCES preguntas (id)
+)
+
+CREATE TABLE vocaciones_de_usuario_por_test (
+	id INTEGER NOT NULL, 
+	id_usuario INTEGER NOT NULL, 
+	id_test INTEGER NOT NULL, 
+	moda_vocacion VARCHAR NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(id_usuario) REFERENCES usuarios (id), 
+	FOREIGN KEY(id_test) REFERENCES tests (id)
+)
+
+CREATE TABLE resenas (
+	id INTEGER NOT NULL, 
+	id_usuario INTEGER NOT NULL, 
+	comentario TEXT NOT NULL, 
+	puntuacion INTEGER NOT NULL, 
+	fecha_creacion DATE, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(id_usuario) REFERENCES usuarios (id)
+)
+
+CREATE TABLE respuestas_de_usuario (
+	id INTEGER NOT NULL, 
+	test_id INTEGER NOT NULL, 
+	respuesta_id INTEGER NOT NULL, 
+	usuario_id INTEGER NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(test_id) REFERENCES tests (id), 
+	FOREIGN KEY(respuesta_id) REFERENCES respuestas (id), 
+	FOREIGN KEY(usuario_id) REFERENCES usuarios (id)
+)
+

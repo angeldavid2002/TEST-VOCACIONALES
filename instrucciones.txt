@@ -1,0 +1,31 @@
+crear las variables de entorno dentro de la carpeta app:
+    crear un archivo .env con:
+        # JWT
+        SECRET_KEY
+        ALGORITHM
+        ACCESS_TOKEN_EXPIRE_MINUTES
+
+        # HASHING
+        SCHEMES
+        DEPRECATED
+
+        # DATABASE
+        DATABASE_URL
+        
+crear entorno virtual:
+    python -m venv .venv
+
+acceder al entorno:
+    venv/Scripts/activate
+
+instalar dependencias
+    pip install -r requirements.txt    
+
+ejecutar server de uvicorn
+    uvicorn app.main:app --reload
+
+ejecutar inicializacion de la base de datos:
+    python -m app.db.setup_database
+
+crear descripcion de la base de datos:
+    python -m describe_db
