@@ -66,7 +66,7 @@ def initialize_database():
     for ciudad in ciudades:
         ciudad_obj = Ciudad(**ciudad)
         session.add(ciudad_obj)
-     # Obtener la ciudad de Valledupar para asociarla a las instituciones
+    # Obtener la ciudad de Valledupar para asociarla a las instituciones
     valledupar = session.query(Ciudad).filter_by(nombre="Valledupar").first()
 
     # Insertar instituciones (colegios) en Valledupar
@@ -100,7 +100,7 @@ def initialize_database():
     admin = Usuario(
         email="admin@universidadcesar.edu.co",
         nombre="Administrador",
-        contrasena="UPCvt",  # En producción guarda contraseñas hasheadas
+        contrasena="UPCVT",  # En producción guarda contraseñas hasheadas
         tipo_usuario="admin",
         fecha_registro=datetime.now(timezone.utc),
     )
