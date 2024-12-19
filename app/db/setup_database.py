@@ -1,8 +1,13 @@
+#importar librerias
 import os
+from datetime import datetime, timezone
+
+#importar servicios
+from ..services.auth_service import get_password_hash
 from .database import engine, SessionLocal
-from ..schemas.sch_base import Base
 
 # Importar todos los modelos
+from ..schemas.sch_base import Base
 from ..schemas.sch_ciudad import Ciudad
 from ..schemas.sch_institucion import Institucion
 from ..schemas.sch_usuario import Usuario
@@ -13,7 +18,9 @@ from ..schemas.sch_respuesta_usuario import RespuestaDeUsuario
 from ..schemas.sch_vocacion_usuario import VocacionDeUsuarioPorTest
 from ..schemas.sch_resena import Resena
 
-from datetime import datetime, timezone
+# Importar configuracion del Admin
+from ..config import config
+
 
 def initialize_database():
     # Verificar si la base de datos ya existe
@@ -98,10 +105,10 @@ def initialize_database():
     
     # Insertar usuario administrador
     admin = Usuario(
-        email="admin@universidadcesar.edu.co",
-        nombre="Administrador",
-        contrasena="UPCVT",  # En producción guarda contraseñas hasheadas
-        tipo_usuario="admin",
+        email=config.ADMIN_EMAIL,
+        nombre=config.ADMIN_NAME,
+        contrasena=get_password_hash(config.ADMIN_PASSWORD),
+        tipo_usuario=config.ADMIN_USER_TYPE,
         fecha_registro=datetime.now(timezone.utc),
     )
     session.add(admin)
