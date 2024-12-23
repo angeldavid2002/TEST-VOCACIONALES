@@ -11,4 +11,4 @@ class Resena(Base):
     puntuacion = Column(Integer, nullable=False)
     fecha_creacion = Column(Date, default=datetime.now(timezone.utc))
 
-    usuario = relationship("Usuario")
+    usuario = relationship("Usuario",backref="resenas")

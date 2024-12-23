@@ -73,17 +73,15 @@ def login_user(email: str, password: str):
             raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
         # Generar token JWT
-        access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={
                 "user_id": usuario.id,
                 "email": usuario.email,
                 "tipo_usuario": usuario.tipo_usuario,
-            },
-            expires_delta=access_token_expires,
+            }
         )
 
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {"access_token": access_token, "token_type": "Bearer"}
     except HTTPException as http_ex:
         # Propagar las excepciones HTTP específicas
         raise http_ex

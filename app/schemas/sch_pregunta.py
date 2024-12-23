@@ -8,4 +8,4 @@ class Pregunta(Base):
     test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
     enunciado = Column(String, nullable=False)
 
-    test = relationship("Test")
+    test = relationship("Test",backref="preguntas")

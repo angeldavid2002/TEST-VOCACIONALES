@@ -9,5 +9,5 @@ class VocacionDeUsuarioPorTest(Base):
     id_test = Column(Integer, ForeignKey("tests.id"), nullable=False)
     moda_vocacion = Column(String, nullable=False)
 
-    usuario = relationship("Usuario")
-    test = relationship("Test")
+    usuario = relationship("Usuario",backref="vocaciones_de_usuario_por_test")
+    test = relationship("Test",backref="vocaciones_de_usuario_por_test")

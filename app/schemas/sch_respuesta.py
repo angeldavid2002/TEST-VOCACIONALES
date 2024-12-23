@@ -10,4 +10,4 @@ class Respuesta(Base):
         respuesta = Column(String, nullable=False)
         vocacion = Column(String, nullable=False)
         
-        pregunta = relationship("Pregunta")
+        pregunta = relationship("Pregunta",backref="respuestas")

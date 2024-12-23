@@ -1,14 +1,35 @@
-from pydantic import BaseModel, Field, EmailStr, field_validator
+import re
+from pydantic import BaseModel, Field, field_validator
 from datetime import date
 from typing import Optional
 
 class UsuarioCreate(BaseModel):
-    nombre: str = Field(..., min_length=2, max_length=50, description="El nombre debe tener entre 2 y 50 caracteres.")
-    email: EmailStr
-    password: str = Field(..., min_length=8, description="La contraseña debe tener al menos 8 caracteres.")
-    id_ciudad: Optional[int] = None
-    id_institucion: Optional[int] = None
+    nombre: str = Field(default="stringst")
+    email: str = Field(default="string@mail.com")
+    password: str = Field(default="stringst")
+    id_ciudad: Optional[int] = Field(default=1)
+    id_institucion: Optional[int] = Field(default=1)
     fecha_registro: date = Field(default_factory=date.today)
+
+    @field_validator("nombre")
+    def validate_nombre(cls, value):
+        if len(value) < 2 or len(value) > 50:
+            raise ValueError("El nombre debe tener entre 2 y 50 caracteres.")
+        return value
+
+    @field_validator("password")
+    def validate_password(cls, value):
+        if len(value) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        return value
+
+    @field_validator("email")
+    def validate_email(cls, value):
+        # Expresión regular para validar el formato del correo electrónico
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, value):
+            raise ValueError("El correo electrónico proporcionado no es válido. Asegúrate de que tenga el formato correcto.")
+        return value
 
     @field_validator("id_ciudad", "id_institucion")
     def validate_ids(cls, value):
@@ -26,6 +47,20 @@ class UsuarioCreate(BaseModel):
         return value
 
 class UsuarioLogin(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=8, description="La contraseña debe tener al menos 8 caracteres.")
+    email: str = Field(default="string@mail.com")
+    password: str = Field(default="stringst")
+    
+    @field_validator("password")
+    def validate_password(cls, value):
+        if len(value) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        return value
+    
+    @field_validator("email")
+    def validate_email(cls, value):
+        # Expresión regular para validar el formato del correo electrónico
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, value):
+            raise ValueError("El correo electrónico proporcionado no es válido. Asegúrate de que tenga el formato correcto.")
+        return value
     

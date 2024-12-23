@@ -9,6 +9,6 @@ class RespuestaDeUsuario(Base):
     respuesta_id = Column(Integer, ForeignKey("respuestas.id"), nullable=False)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
 
-    test = relationship("Test")
-    respuesta = relationship("Respuesta")
-    usuario = relationship("Usuario")
+    test = relationship("Test",backref="respuestas_de_usuario")
+    respuesta = relationship("Respuesta",backref="respuestas_de_usuario")
+    usuario = relationship("Usuario",backref="respuestas_de_usuario")

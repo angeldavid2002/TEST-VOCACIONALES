@@ -4,7 +4,7 @@ from ..services.user_services import *
 
 router = APIRouter()
 
-@router.post("/register/")
+@router.post("/register")
 async def register(user: UsuarioCreate):
     try:
         response = register_user(user)
@@ -14,7 +14,7 @@ async def register(user: UsuarioCreate):
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
 
-@router.post("/login/")
+@router.post("/login")
 async def login(user: UsuarioLogin):
     try:
         response = login_user(user.email, user.password)

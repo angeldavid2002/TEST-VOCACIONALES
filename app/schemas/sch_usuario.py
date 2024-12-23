@@ -16,5 +16,5 @@ class Usuario(Base):
     id_institucion = Column(Integer, ForeignKey("instituciones.id"), nullable=True)
     fecha_registro = Column(Date, default=datetime.now(timezone.utc))
 
-    ciudad = relationship("Ciudad")
-    institucion = relationship("Institucion")
+    ciudad = relationship("Ciudad",backref="usuarios")
+    institucion = relationship("Institucion",backref="usuarios")
