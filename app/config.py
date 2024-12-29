@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 
 # Cargar variables desde .env
-load_dotenv()
+load_dotenv('.env')
 
 class Config:
     # Configuración de las variables
@@ -23,12 +23,3 @@ class Config:
     ADMIN_USER_TYPE=os.getenv("ADMIN_USER_TYPE")
     
 config = Config()
-# print("JWT")
-# print(f"SECRET_KEY: {config.SECRET_KEY}")
-# print(f"ALGORITHM: {config.ALGORITHM}")
-# print(f"ACCESS_TOKEN_EXPIRE_MINUTES: {config.ACCESS_TOKEN_EXPIRE_MINUTES}")
-# print("HASHING")
-# print(f"HASHING_SCHEMES: {config.HASHING_SCHEMES}")
-# print(f"HASHING_DEPRECATED: {config.HASHING_DEPRECATED}")
-# print("SQLITE")
-# print(f"DATABASE_URL: {config.DATABASE_URL}")

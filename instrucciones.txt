@@ -1,4 +1,4 @@
-crear las variables de entorno dentro de la carpeta app:
+crear las variables de entorno dentro de la carpeta raiz del proyecto:
     crear un archivo .env con:
         # JWT
         SECRET_KEY
