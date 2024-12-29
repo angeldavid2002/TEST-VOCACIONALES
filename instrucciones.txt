@@ -27,8 +27,5 @@ creacion de la base de datos:
 ejecutar server de uvicorn
     uvicorn app.main:app --reload
 
-ejecutar inicializacion de la base de datos:
-    python -m app.db.setup_database
-
 crear descripcion de la base de datos:
     python -m describe_db
