@@ -1,103 +1,101 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from ..services.auth_service import verify_jwt_token
-from ..services.test_service import (
-    create_test_service,
-    list_tests_service,
-    delete_test_service,
-    update_test_service,
+from ..services.respuesta_service import (
+    list_respuestas_by_pregunta,
+    search_respuesta_by_id,
+    create_respuesta_service,
+    update_respuesta_service,
+    delete_respuesta_service,
 )
-from ..models.mdl_test import TestCreate
+from ..models.mdl_respuesta import RespuestaCreate, RespuestaUpdate
 
-# 4 rutas
-
+# Crear el router
 router = APIRouter()
 
 # Configurar el esquema de seguridad HTTPBearer
 security = HTTPBearer()
 
-
-# 1. registrar test
-@router.post("/register")
-async def create_test(
-    test: TestCreate,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-):
-    try:
-        # Extraer el token del encabezado
-        token = credentials.credentials
-
-        # Verificar el token y obtener información del usuario
-        user_info = verify_jwt_token(token)
-
-        # Llamar al servicio para crear el test
-        response = create_test_service(test, user_info)
-        return response
-    except HTTPException as e:
-        raise e
-    except Exception as ex:
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
-
-# 2. Listar tests
-@router.get("/list")
-async def list_tests(
+# 1. Listar respuestas por pregunta_id
+@router.get("/list/{pregunta_id}")
+async def get_respuestas_by_pregunta(
+    pregunta_id: int,
     page: int = Query(default=1, gt=0),
-    nombre: str = Query(default=None),
-    fecha_actualizacion: str = Query(default=None),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
-        # Extraer el token del encabezado
         token = credentials.credentials
-
-        # Verificar el token y obtener información del usuario
         user_info = verify_jwt_token(token)
-
-        # Llamar al servicio para listar los tests
-        response = list_tests_service(page, nombre, fecha_actualizacion)
+        response = list_respuestas_by_pregunta(pregunta_id, page, user_info)
         return response
     except HTTPException as e:
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
-# 3. Eliminar tests
-@router.delete("/{test_id}")
-async def delete_test(
-    test_id: int,
+
+# 2. Buscar respuesta por ID
+@router.get("/search/{respuesta_id}")
+async def get_respuesta_by_id(
+    respuesta_id: int,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
-        # Extraer el token del encabezado
         token = credentials.credentials
-
-        # Verificar el token y obtener información del usuario
         user_info = verify_jwt_token(token)
-
-        # Llamar al servicio para eliminar el test
-        response = delete_test_service(test_id, user_info)
+        response = search_respuesta_by_id(respuesta_id, user_info)
         return response
     except HTTPException as e:
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
-# 4. Editar test
-@router.put("/{test_id}")
-async def update_test(
-    test_id: int,
-    test: TestCreate,
+
+# 3. Crear respuesta
+@router.post("/create")
+async def create_respuesta(
+    respuesta: RespuestaCreate,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
-        # Extraer el token del encabezado
         token = credentials.credentials
-
-        # Verificar el token y obtener información del usuario
         user_info = verify_jwt_token(token)
+        response = create_respuesta_service(respuesta, user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
-        # Llamar al servicio para actualizar el test
-        response = update_test_service(test_id, test, user_info)
+
+# 4. Editar respuesta
+@router.put("/update")
+async def update_respuesta(
+    respuesta: RespuestaUpdate,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    try:
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+        response = update_respuesta_service(respuesta, user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+
+# 5. Eliminar respuesta
+@router.delete("/delete/{respuesta_id}")
+async def delete_respuesta(
+    respuesta_id: int,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    try:
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+        response = delete_respuesta_service(respuesta_id, user_info)
         return response
     except HTTPException as e:
         raise e

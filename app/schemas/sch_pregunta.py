@@ -9,3 +9,4 @@ class Pregunta(Base):
     enunciado = Column(String, nullable=False)
 
     test = relationship("Test",backref="preguntas")
+    

@@ -9,3 +9,4 @@ class Test(Base):
     descripcion = Column(String, nullable=False)
     fecha_creacion = Column(Date, default=datetime.now(timezone.utc))
     fecha_actualizacion = Column(Date, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    

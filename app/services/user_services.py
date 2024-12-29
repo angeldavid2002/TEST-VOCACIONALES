@@ -1,6 +1,4 @@
-from datetime import date
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 from ..db.database import get_db_session
 from ..models.mdl_user import UsuarioCreate
 from ..schemas.sch_usuario import Usuario,Ciudad,Institucion

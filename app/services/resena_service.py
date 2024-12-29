@@ -1,6 +1,4 @@
-from typing import List
 from sqlalchemy import func
-from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from datetime import datetime, timezone
 
@@ -37,7 +35,12 @@ def create_resena_service(resena_data: ResenaCreate, current_user):
             "message": "Reseña registrada exitosamente",
             "data": {"id": nueva_resena.id},
         }
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
     except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
         db.rollback()
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
@@ -45,9 +48,11 @@ def create_resena_service(resena_data: ResenaCreate, current_user):
 
 
 # Consultar reseñas organizadas de más reciente a más antigua
-def get_resenas_paginated_desc_service(skip: int, limit: int = 5):
+def get_resenas_paginated_desc_service(page: int, limit: int = 5):
     db = next(get_db_session())
     try:
+        # Calcular el offset basado en la página
+        skip = (page - 1) * limit
         resenas = (
             db.query(
                 Resena.id,
@@ -72,14 +77,24 @@ def get_resenas_paginated_desc_service(skip: int, limit: int = 5):
             }
             for r in resenas
         ]
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
 
 
 # Consultar reseñas organizadas de más antigua a más reciente
-def get_resenas_paginated_asc_service(skip: int, limit: int = 5):
+def get_resenas_paginated_asc_service(page: int, limit: int = 5):
     db = next(get_db_session())
     try:
+        # Calcular el offset basado en la página
+        skip = (page - 1) * limit
         resenas = (
             db.query(
                 Resena.id,
@@ -104,14 +119,24 @@ def get_resenas_paginated_asc_service(skip: int, limit: int = 5):
             }
             for r in resenas
         ]
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
 
 
 # Filtrar reseñas por calificación
-def get_resenas_by_rating_service(rating: int, skip: int, limit: int = 5):
+def get_resenas_by_rating_service(rating: int, page: int, limit: int = 5):
     db = next(get_db_session())
     try:
+        # Calcular el offset basado en la página
+        skip = (page - 1) * limit
         resenas = (
             db.query(
                 Resena.id,
@@ -137,14 +162,24 @@ def get_resenas_by_rating_service(rating: int, skip: int, limit: int = 5):
             }
             for r in resenas
         ]
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
 
 
 # Consultar reseñas por ID de usuario
-def get_resenas_by_user_id_service(user_id: int, skip: int, limit: int = 5):
+def get_resenas_by_user_id_service(user_id: int, page: int, limit: int = 5):
     db = next(get_db_session())
     try:
+        # Calcular el offset basado en la página
+        skip = (page - 1) * limit
         resenas = (
             db.query(
                 Resena.id,
@@ -170,6 +205,14 @@ def get_resenas_by_user_id_service(user_id: int, skip: int, limit: int = 5):
             }
             for r in resenas
         ]
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
 
@@ -180,8 +223,17 @@ def get_average_rating_service() -> float:
     try:
         avg_rating = db.query(func.avg(Resena.puntuacion)).scalar()
         return avg_rating or 0.0
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
+
 
 # edicion de reseñas
 def edit_resena_service(resena_id: int, resena_data: ResenaCreate, current_user):
@@ -192,9 +244,7 @@ def edit_resena_service(resena_id: int, resena_data: ResenaCreate, current_user)
 
         # Verificar si la reseña existe
         if not resena:
-            raise HTTPException(
-                status_code=404, detail="Reseña no encontrada."
-            )
+            raise HTTPException(status_code=404, detail="Reseña no encontrada.")
 
         # Verificar si el usuario actual es el propietario de la reseña
         if resena.id_usuario != current_user["user_id"]:
@@ -235,7 +285,8 @@ def edit_resena_service(resena_id: int, resena_data: ResenaCreate, current_user)
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
-    
+
+
 # eliminar reseña
 def delete_resena_service(resena_id: int, current_user):
     db = next(get_db_session())
@@ -245,9 +296,7 @@ def delete_resena_service(resena_id: int, current_user):
 
         # Verificar si la reseña existe
         if not resena:
-            raise HTTPException(
-                status_code=404, detail="Reseña no encontrada."
-            )
+            raise HTTPException(status_code=404, detail="Reseña no encontrada.")
 
         # Verificar si el usuario actual es el propietario de la reseña o un administrador
         if resena.id_usuario != current_user["user_id"]:
@@ -273,11 +322,20 @@ def delete_resena_service(resena_id: int, current_user):
     finally:
         db.close()
 
+
 # Contar el total de reseñas
 def count_total_resenas_service() -> int:
     db = next(get_db_session())
     try:
         return db.query(Resena).count()
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
 
@@ -293,5 +351,13 @@ def count_resenas_by_rating_service(rating: int) -> int:
             )
 
         return db.query(Resena).filter(Resena.puntuacion == rating).count()
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()

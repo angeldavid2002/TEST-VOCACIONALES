@@ -48,10 +48,10 @@ async def create_resena(
 # Consultar reseñas de más reciente a más antigua
 @router.get("/recent")
 async def get_recent_reviews(
-    skip: int = Query(0, ge=0),  # Validar que skip sea no negativo
+    page: int = Query(1, gt=0),  # Validar que skip sea no negativo
 ):
     try:
-        return get_resenas_paginated_desc_service(skip=skip)
+        return get_resenas_paginated_desc_service(page=page)
     except HTTPException as e:
         raise e
     except Exception as ex:
@@ -61,10 +61,10 @@ async def get_recent_reviews(
 # Consultar reseñas de más antigua a más reciente
 @router.get("/oldest")
 async def get_oldest_reviews(
-    skip: int = Query(0, ge=0),
+    page: int = Query(1, gt=0),
 ):
     try:
-        return get_resenas_paginated_asc_service(skip=skip)
+        return get_resenas_paginated_asc_service(page=page)
     except HTTPException as e:
         raise e
     except Exception as ex:
@@ -75,10 +75,10 @@ async def get_oldest_reviews(
 @router.get("/filter_rating")
 async def filter_reviews_by_rating(
     rating: int,
-    skip: int = Query(0, ge=0),
+    page: int = Query(1, gt=0),
 ):
     try:
-        return get_resenas_by_rating_service(rating=rating, skip=skip)
+        return get_resenas_by_rating_service(rating=rating, page=page)
     except HTTPException as e:
         raise e
     except Exception as ex:
@@ -88,12 +88,12 @@ async def filter_reviews_by_rating(
 # 4. Consultar reseñas por ID de usuario (token)
 @router.get("/user")
 async def get_reviews_by_user(
-    skip: int = Query(0, ge=0),
+    page: int = Query(1, gt=0),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
         user_info = verify_jwt_token(credentials.credentials)
-        return get_resenas_by_user_id_service(user_id=user_info["user_id"], skip=skip)
+        return get_resenas_by_user_id_service(user_id=user_info["user_id"], page=page)
     except HTTPException as e:
         raise e
     except Exception as ex:
