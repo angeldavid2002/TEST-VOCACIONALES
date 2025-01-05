@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .routers import (
     auth,
     respuestas,
@@ -21,3 +22,12 @@ app.include_router(respuestas.router, prefix="/respuestas", tags=["Respuestas"])
 app.include_router(respuestaUsuario.router, prefix="/respuestaUsuario", tags=["Respuesta usuario"])
 app.include_router(vocacionUsuario.router, prefix="/vocacion", tags=["Vocacion usuario"])
 app.include_router(statics.router, prefix="/statics", tags=["Estadisticas tests"])
+
+
+app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"], 
+        allow_credentials=True,
+        allow_methods=["*"],  
+        allow_headers=["*"],  
+    )
