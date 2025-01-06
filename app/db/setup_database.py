@@ -107,6 +107,7 @@ def initialize_database():
     admin = Usuario(
         email=config.ADMIN_EMAIL,
         nombre=config.ADMIN_NAME,
+        edad=18,
         contrasena=get_password_hash(config.ADMIN_PASSWORD),
         tipo_usuario=config.ADMIN_USER_TYPE,
         fecha_registro=datetime.now(timezone.utc),

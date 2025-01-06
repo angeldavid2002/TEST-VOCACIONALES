@@ -37,6 +37,7 @@ def register_user(user: UsuarioCreate):
         nuevo_usuario = Usuario(
             email=user.email,
             nombre=user.nombre,
+            edad=user.edad,
             contrasena=hashed_password,
             tipo_usuario="comun",
             id_ciudad=user.id_ciudad,
@@ -56,7 +57,6 @@ def register_user(user: UsuarioCreate):
         # Aquí atrapamos cualquier otra excepción imprevista
         db.rollback()
         raise HTTPException(status_code=500, detail=str(ex))
-
 
 def login_user(email: str, password: str):
     db = next(get_db_session())
@@ -86,3 +86,36 @@ def login_user(email: str, password: str):
     except Exception as ex:
         # Propagar las excepciones HTTP no manejadas
         raise HTTPException(status_code=500, detail=str(ex))
+
+def get_user_data_service(current_user):
+    # Verificar si el usuario tiene privilegios de acceso
+    if not current_user or not current_user.get("user_id"):
+        raise HTTPException(status_code=401, detail="No está autorizado.")
+
+    db = next(get_db_session())
+    try:
+        # Buscar usuario en la base de datos
+        usuario = db.query(Usuario).filter(Usuario.id == current_user["user_id"]).first()
+
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+        # Devolver datos del usuario
+        return {
+            "ID": usuario.id,
+            "Nombre": usuario.nombre,
+            "Edad": usuario.edad,
+            "Email": usuario.email,
+            "Tipo_Usuario": usuario.tipo_usuario,
+            "ID_Ciudad": usuario.id_ciudad,
+            "ID_Institucion": usuario.id_institucion,
+            "Fecha_Registro": usuario.fecha_registro,
+        }
+    except HTTPException as http_ex:
+        # Propagar excepciones HTTP específicas
+        raise http_ex
+    except Exception as ex:
+        # Propagar cualquier excepción inesperada
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()

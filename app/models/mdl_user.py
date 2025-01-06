@@ -6,11 +6,18 @@ from typing import Optional
 class UsuarioCreate(BaseModel):
     nombre: str = Field(default="stringst")
     email: str = Field(default="string@mail.com")
-    password: str = Field(default="stringst")
+    edad: int = Field(default=1)
     id_ciudad: Optional[int] = Field(default=1)
     id_institucion: Optional[int] = Field(default=1)
     fecha_registro: date = Field(default_factory=date.today)
+    password: str = Field(default="stringst")
 
+    @field_validator("edad")
+    def validate_age(cls, value):
+        if value is not None and value <= 0:
+            raise ValueError("La edad debe ser un número entero positivo.")
+        return value
+    
     @field_validator("nombre")
     def validate_nombre(cls, value):
         if len(value) < 2 or len(value) > 50:

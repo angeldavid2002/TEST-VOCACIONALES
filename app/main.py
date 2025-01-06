@@ -9,6 +9,7 @@ from .routers import (
     respuestaUsuario,
     vocacionUsuario,
     statics,
+    users
 )
 
 app = FastAPI()
@@ -22,7 +23,7 @@ app.include_router(respuestas.router, prefix="/respuestas", tags=["Respuestas"])
 app.include_router(respuestaUsuario.router, prefix="/respuestaUsuario", tags=["Respuesta usuario"])
 app.include_router(vocacionUsuario.router, prefix="/vocacion", tags=["Vocacion usuario"])
 app.include_router(statics.router, prefix="/statics", tags=["Estadisticas tests"])
-
+app.include_router(users.router, prefix="/users", tags=["Usuarios"])
 
 app.add_middleware(
         CORSMiddleware,
