@@ -119,3 +119,37 @@ def get_user_data_service(current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
+
+def change_password_service(password_request, current_user):
+    db = next(get_db_session())
+    try:
+        # Buscar al usuario en la base de datos
+        usuario = db.query(Usuario).filter(Usuario.id == current_user["user_id"]).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+        # Verificar la contraseña actual
+        if not verify_password(password_request.current_password, usuario.contrasena):
+            raise HTTPException(
+                status_code=403, detail="La contraseña actual es incorrecta."
+            )
+
+        # Validar que la nueva contraseña y su confirmación coincidan
+        if password_request.new_password != password_request.confirm_password:
+            raise HTTPException(
+                status_code=400,
+                detail="La nueva contraseña y la confirmación no coinciden.",
+            )
+
+        # Actualizar la contraseña del usuario
+        usuario.contrasena = get_password_hash(password_request.new_password)
+        db.commit()
+
+        return {"message": "Contraseña actualizada exitosamente."}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()

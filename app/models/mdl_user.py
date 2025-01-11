@@ -70,4 +70,26 @@ class UsuarioLogin(BaseModel):
         if not re.match(email_regex, value):
             raise ValueError("El correo electrónico proporcionado no es válido. Asegúrate de que tenga el formato correcto.")
         return value
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
     
+    @field_validator("current_password")
+    def validate_current_password(cls, value):
+        if len(value) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        return value
+    
+    @field_validator("new_password")
+    def validate_new_password(cls, value):
+        if len(value) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        return value
+    
+    @field_validator("confirm_password")
+    def validate_confirm_password(cls, value):
+        if len(value) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        return value
