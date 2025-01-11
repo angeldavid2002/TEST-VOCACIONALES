@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from .routers import (
     auth,
     respuestas,
@@ -9,7 +10,8 @@ from .routers import (
     respuestaUsuario,
     vocacionUsuario,
     statics,
-    users
+    users,
+    ciudad
 )
 
 app = FastAPI()
@@ -24,6 +26,8 @@ app.include_router(respuestaUsuario.router, prefix="/respuestaUsuario", tags=["R
 app.include_router(vocacionUsuario.router, prefix="/vocacion", tags=["Vocacion usuario"])
 app.include_router(statics.router, prefix="/statics", tags=["Estadisticas tests"])
 app.include_router(users.router, prefix="/users", tags=["Usuarios"])
+app.include_router(ciudad.router, prefix="/city", tags=["Ciudades"])
+
 
 app.add_middleware(
         CORSMiddleware,

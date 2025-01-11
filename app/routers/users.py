@@ -8,7 +8,7 @@ router = APIRouter()
 # Configuración del esquema de seguridad HTTPBearer
 security = HTTPBearer()
 
-@router.get("/user/data")
+@router.get("/data")
 async def get_user_data(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         # Verificar token del usuario
