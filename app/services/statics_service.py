@@ -247,3 +247,76 @@ def vocacion_mas_comun_por_ciudad_service(current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
+
+# Servicio de vocación más común por institución 
+def get_most_common_vocation_per_institution_service(current_user):
+    # Verificar si el usuario tiene privilegios de administrador
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para acceder a esta información.",
+        )
+
+    db = next(get_db_session())
+    try:
+        # Subconsulta para encontrar la moda de vocación por institución
+        subquery = (
+            db.query(
+                Usuario.id_institucion,
+                VocacionDeUsuarioPorTest.moda_vocacion,
+                func.count(VocacionDeUsuarioPorTest.moda_vocacion).label("vocacion_count"),
+            )
+            .join(
+                VocacionDeUsuarioPorTest,
+                Usuario.id == VocacionDeUsuarioPorTest.id_usuario,
+            )
+            .group_by(Usuario.id_institucion, VocacionDeUsuarioPorTest.moda_vocacion)
+            .subquery()
+        )
+
+        # Consulta principal para combinar instituciones con la moda de vocaciones
+        result = (
+            db.query(
+                Institucion.id,
+                Institucion.nombre,
+                Institucion.direccion,
+                Institucion.telefono,
+                subquery.c.moda_vocacion,
+                func.max(subquery.c.vocacion_count).label("max_count"),
+            )
+            .join(subquery, Institucion.id == subquery.c.id_institucion)
+            .group_by(
+                Institucion.id,
+                Institucion.nombre,
+                Institucion.direccion,
+                Institucion.telefono,
+                subquery.c.moda_vocacion,
+            )
+            .all()
+        )
+
+        # Formatear resultados en una lista de diccionarios
+        response = [
+            {
+                "ID_Institucion": row.id,
+                "Nombre": row.nombre,
+                "Direccion": row.direccion,
+                "Telefono": row.telefono,
+                "Moda_Vocacion": row.moda_vocacion,
+            }
+            for row in result
+        ]
+
+        if not response:
+            raise HTTPException(
+                status_code=404,
+                detail="No se encontraron datos para las instituciones.",
+            )
+
+        return response
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()
