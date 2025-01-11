@@ -76,3 +76,34 @@ def update_city_service(city_id: int, city: CiudadUpdate, current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
+
+def delete_city_service(city_id: int, current_user):
+    # Verificar si el usuario tiene privilegios de administrador
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para eliminar ciudades.",
+        )
+
+    db = next(get_db_session())
+    try:
+        # Buscar la ciudad por ID
+        ciudad = db.query(Ciudad).filter(Ciudad.id == city_id).first()
+        if not ciudad:
+            raise HTTPException(
+                status_code=404,
+                detail=f"La ciudad con ID {city_id} no existe.",
+            )
+
+        # Eliminar la ciudad
+        db.delete(ciudad)
+        db.commit()
+
+        return {"message": f"Ciudad con ID {city_id} eliminada exitosamente."}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()
