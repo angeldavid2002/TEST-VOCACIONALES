@@ -1,12 +1,14 @@
-#importar librerias
+# Importar librerías
 import os
 from datetime import datetime, timezone
+from sqlalchemy import inspect, text
+from sqlalchemy.exc import ProgrammingError
 
-#importar servicios
+# Importar servicios y configuraciones
 from ..services.auth_service import get_password_hash
-from .database import engine, SessionLocal
+from ..config import config
 
-# Importar todos los modelos
+# Importar modelos
 from ..schemas.sch_base import Base
 from ..schemas.sch_ciudad import Ciudad
 from ..schemas.sch_institucion import Institucion
@@ -17,107 +19,184 @@ from ..schemas.sch_respuesta import Respuesta
 from ..schemas.sch_respuesta_usuario import RespuestaDeUsuario
 from ..schemas.sch_vocacion_usuario import VocacionDeUsuarioPorTest
 from ..schemas.sch_resena import Resena
+from ..schemas.sch_recurso import Recurso  # Si existe esta tabla en tu proyecto
 
-# Importar configuracion del Admin
-from ..config import config
+# Importar configuración de la base de datos
+from .database import engine, get_db_session
 
 
 def initialize_database():
-    # Verificar si la base de datos ya existe
-    if os.path.exists("database.db"):
-        print("La base de datos ya existe. No es necesario inicializarla nuevamente.")
-        return
+    """
+    Inicializa la base de datos:
+    - Si no existe, la crea con el esquema completo.
+    - Si existe, verifica el esquema y realiza actualizaciones necesarias.
+    """
+    if not os.path.exists("database.db"):
+        print("La base de datos no existe. Creando una nueva...")
+        create_schema()
+    else:
+        print("La base de datos ya existe. Verificando el esquema...")
+        ensure_schema_updated()
 
-    # Crear tablas
+    # Insertar datos iniciales
+    insert_initial_data()
+
+
+def create_schema():
+    """Crea el esquema inicial de la base de datos."""
     Base.metadata.create_all(bind=engine)
+    print("Esquema inicial creado.")
 
-    # Crear sesión
-    session = SessionLocal()
 
-    # Insertar ciudades de Colombia
-    ciudades = [
-        {"nombre": "Bogotá", "latitud": 4.60971, "longitud": -74.08175},
-        {"nombre": "Medellín", "latitud": 6.25184, "longitud": -75.56359},
-        {"nombre": "Cali", "latitud": 3.43722, "longitud": -76.5225},
-        {"nombre": "Barranquilla", "latitud": 10.96854, "longitud": -74.78132},
-        {"nombre": "Cartagena", "latitud": 10.39972, "longitud": -75.51444},
-        {"nombre": "Tunja", "latitud": 5.5355, "longitud": -73.3672},
-        {"nombre": "Manizales", "latitud": 5.06889, "longitud": -75.51738},
-        {"nombre": "Florencia", "latitud": 1.6167, "longitud": -75.6167},
-        {"nombre": "Yopal", "latitud": 5.3352, "longitud": -72.3964},
-        {"nombre": "Popayán", "latitud": 2.43823, "longitud": -76.61316},
-        {"nombre": "Valledupar", "latitud": 10.46314, "longitud": -73.25322},
-        {"nombre": "Quibdó", "latitud": 5.6940, "longitud": -76.6536},
-        {"nombre": "Montería", "latitud": 8.74798, "longitud": -75.88143},
-        {"nombre": "Inírida", "latitud": 3.8667, "longitud": -67.9667},
-        {"nombre": "San José del Guaviare", "latitud": 2.5700, "longitud": -72.6500},
-        {"nombre": "Neiva", "latitud": 2.9273, "longitud": -75.28189},
-        {"nombre": "Riohacha", "latitud": 11.54479, "longitud": -74.19904},
-        {"nombre": "Santa Marta", "latitud": 11.24079, "longitud": -74.19904},
-        {"nombre": "Villavicencio", "latitud": 4.1420, "longitud": -73.62664},
-        {"nombre": "San Juan de Pasto", "latitud": 1.21361, "longitud": -77.28111},
-        {"nombre": "Cúcuta", "latitud": 7.89391, "longitud": -72.50782},
-        {"nombre": "Mocoa", "latitud": 1.1519, "longitud": -76.6487},
-        {"nombre": "Armenia", "latitud": 4.5333, "longitud": -75.6811},
-        {"nombre": "Pereira", "latitud": 4.81333, "longitud": -75.69611},
-        {"nombre": "San Andrés", "latitud": 12.5833, "longitud": -81.7000},
-        {"nombre": "Bucaramanga", "latitud": 7.12539, "longitud": -73.1198},
-        {"nombre": "Sincelejo", "latitud": 9.3033, "longitud": -75.4000},
-        {"nombre": "Ibagué", "latitud": 4.43889, "longitud": -75.23222},
-        {"nombre": "Leticia", "latitud": -4.2159, "longitud": -69.9408},
-        {"nombre": "Arauca", "latitud": 7.0902, "longitud": -70.7470},
-        {"nombre": "Bello", "latitud": 6.33732, "longitud": -75.55795},
-        {"nombre": "Soledad", "latitud": 10.91843, "longitud": -74.76459},
-    ]
+def ensure_schema_updated():
+    """
+    Verifica que todas las tablas y columnas definidas en los modelos existan en la base de datos.
+    Si alguna tabla o columna falta, la crea o actualiza sin eliminar datos existentes.
+    """
+    inspector = inspect(engine)
+    existing_tables = inspector.get_table_names()
 
-    for ciudad in ciudades:
-        ciudad_obj = Ciudad(**ciudad)
-        session.add(ciudad_obj)
-    # Obtener la ciudad de Valledupar para asociarla a las instituciones
-    valledupar = session.query(Ciudad).filter_by(nombre="Valledupar").first()
+    for table_name in Base.metadata.tables.keys():
+        if table_name not in existing_tables:
+            print(f"Tabla '{table_name}' no encontrada. Creándola...")
+            Base.metadata.tables[table_name].create(bind=engine)
 
-    # Insertar instituciones (colegios) en Valledupar
-    colegios_valledupar = [
-        {
-            "nombre": "Colegio Nacional Loperena",
-            "direccion": "Calle 14 # 11-50, Valledupar",
-            "telefono": "3201234567",
-        },
-        {
-            "nombre": "Institución Educativa CASD Simón Bolívar",
-            "direccion": "Carrera 19 # 6-20, Valledupar",
-            "telefono": "3019876543",
-        },
-        {
-            "nombre": "Colegio Gimnasio del Norte",
-            "direccion": "Avenida Fundación # 21-10, Valledupar",
-            "telefono": "3124567890",
-        },
-    ]
+    with engine.connect() as connection:
+        for table_name, table in Base.metadata.tables.items():
+            try:
+                columns = inspector.get_columns(table_name)
+                column_names = [col["name"] for col in columns]
 
-    for colegio in colegios_valledupar:
-        institucion_obj = Institucion(
-            nombre=colegio["nombre"],
-            direccion=colegio["direccion"],
-            telefono=colegio["telefono"],
-        )
-        session.add(institucion_obj)
-    
-    # Insertar usuario administrador
-    admin = Usuario(
-        email=config.ADMIN_EMAIL,
-        nombre=config.ADMIN_NAME,
-        edad=18,
-        contrasena=get_password_hash(config.ADMIN_PASSWORD),
-        tipo_usuario=config.ADMIN_USER_TYPE,
-        fecha_registro=datetime.now(timezone.utc),
+                for column in table.columns:
+                    if column.name not in column_names:
+                        print(
+                            f"Columna '{column.name}' no encontrada en la tabla '{table_name}'. Agregándola..."
+                        )
+                        alter_table_add_column(connection, table_name, column)
+            except ProgrammingError as e:
+                print(f"Error al verificar la tabla '{table_name}': {e}")
+
+
+def alter_table_add_column(connection, table_name, column):
+    """Agrega una columna a una tabla existente."""
+    column_type = str(column.type.compile(dialect=engine.dialect))
+    default_clause = (
+        f"DEFAULT {column.default.arg}" if column.default is not None else ""
     )
-    session.add(admin)
+    nullable_clause = "" if column.nullable else "NOT NULL"
+    alter_query = text(
+        f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column_type} {nullable_clause} {default_clause};"
+    )
 
-    # Confirmar los cambios
-    session.commit()
-    session.close()
-    print("Base de datos inicializada correctamente.")
+    try:
+        connection.execute(alter_query)
+        print(f"Columna '{column.name}' agregada a la tabla '{table_name}'.")
+    except ProgrammingError as e:
+        print(
+            f"Error al agregar columna '{column.name}' a la tabla '{table_name}': {e}"
+        )
+
+
+def insert_initial_data():
+    """Inserta datos iniciales si no existen, evitando duplicados."""
+    # Obtener la sesión desde el generador
+    session_generator = get_db_session()
+    session = next(session_generator)
+    try:
+        # Insertar ciudades
+        ciudades = [
+            {"nombre": "Bogotá", "latitud": 4.60971, "longitud": -74.08175},
+            {"nombre": "Medellín", "latitud": 6.25184, "longitud": -75.56359},
+            {"nombre": "Cali", "latitud": 3.43722, "longitud": -76.5225},
+            {"nombre": "Barranquilla", "latitud": 10.96854, "longitud": -74.78132},
+            {"nombre": "Cartagena", "latitud": 10.39972, "longitud": -75.51444},
+            {"nombre": "Tunja", "latitud": 5.5355, "longitud": -73.3672},
+            {"nombre": "Manizales", "latitud": 5.06889, "longitud": -75.51738},
+            {"nombre": "Florencia", "latitud": 1.6167, "longitud": -75.6167},
+            {"nombre": "Yopal", "latitud": 5.3352, "longitud": -72.3964},
+            {"nombre": "Popayán", "latitud": 2.43823, "longitud": -76.61316},
+            {"nombre": "Valledupar", "latitud": 10.46314, "longitud": -73.25322},
+            {"nombre": "Quibdó", "latitud": 5.6940, "longitud": -76.6536},
+            {"nombre": "Montería", "latitud": 8.74798, "longitud": -75.88143},
+            {"nombre": "Inírida", "latitud": 3.8667, "longitud": -67.9667},
+            {
+                "nombre": "San José del Guaviare",
+                "latitud": 2.5700,
+                "longitud": -72.6500,
+            },
+            {"nombre": "Neiva", "latitud": 2.9273, "longitud": -75.28189},
+            {"nombre": "Riohacha", "latitud": 11.54479, "longitud": -74.19904},
+            {"nombre": "Santa Marta", "latitud": 11.24079, "longitud": -74.19904},
+            {"nombre": "Villavicencio", "latitud": 4.1420, "longitud": -73.62664},
+            {"nombre": "San Juan de Pasto", "latitud": 1.21361, "longitud": -77.28111},
+            {"nombre": "Cúcuta", "latitud": 7.89391, "longitud": -72.50782},
+            {"nombre": "Mocoa", "latitud": 1.1519, "longitud": -76.6487},
+            {"nombre": "Armenia", "latitud": 4.5333, "longitud": -75.6811},
+            {"nombre": "Pereira", "latitud": 4.81333, "longitud": -75.69611},
+            {"nombre": "San Andrés", "latitud": 12.5833, "longitud": -81.7000},
+            {"nombre": "Bucaramanga", "latitud": 7.12539, "longitud": -73.1198},
+            {"nombre": "Sincelejo", "latitud": 9.3033, "longitud": -75.4000},
+            {"nombre": "Ibagué", "latitud": 4.43889, "longitud": -75.23222},
+            {"nombre": "Leticia", "latitud": -4.2159, "longitud": -69.9408},
+            {"nombre": "Arauca", "latitud": 7.0902, "longitud": -70.7470},
+            {"nombre": "Bello", "latitud": 6.33732, "longitud": -75.55795},
+            {"nombre": "Soledad", "latitud": 10.91843, "longitud": -74.76459},
+        ]
+        for ciudad in ciudades:
+            if not session.query(Ciudad).filter_by(nombre=ciudad["nombre"]).first():
+                session.add(Ciudad(**ciudad))
+
+        # Insertar instituciones en Valledupar
+        valledupar = session.query(Ciudad).filter_by(nombre="Valledupar").first()
+        if valledupar:
+            instituciones = [
+                {
+                    "nombre": "Colegio Nacional Loperena",
+                    "direccion": "Calle 14 # 11-50, Valledupar",
+                    "telefono": "3201234567",
+                },
+                {
+                    "nombre": "Institución Educativa CASD Simón Bolívar",
+                    "direccion": "Carrera 19 # 6-20, Valledupar",
+                    "telefono": "3019876543",
+                },
+                {
+                    "nombre": "Colegio Gimnasio del Norte",
+                    "direccion": "Avenida Fundación # 21-10, Valledupar",
+                    "telefono": "3124567890",
+                },
+            ]
+            for institucion in instituciones:
+                if (
+                    not session.query(Institucion)
+                    .filter_by(nombre=institucion["nombre"])
+                    .first()
+                ):
+                    session.add(Institucion(**institucion))
+
+        # Insertar usuario administrador
+        if not session.query(Usuario).filter_by(email=config.ADMIN_EMAIL).first():
+            admin = Usuario(
+                email=config.ADMIN_EMAIL,
+                nombre=config.ADMIN_NAME,
+                edad=18,
+                contrasena=get_password_hash(config.ADMIN_PASSWORD),
+                tipo_usuario=config.ADMIN_USER_TYPE,
+                fecha_registro=datetime.now(timezone.utc),
+            )
+            session.add(admin)
+
+        # Confirmar cambios
+        session.commit()
+        print("Datos iniciales insertados correctamente.")
+    except Exception as e:
+        session.rollback()
+        print(f"Error al insertar datos iniciales: {e}")
+    finally:
+        # Cierra la sesión
+        session.close()
+        next(session_generator, None)  # Finaliza el generador si corresponde
+
 
 if __name__ == "__main__":
     initialize_database()

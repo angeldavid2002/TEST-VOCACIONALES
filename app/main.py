@@ -11,7 +11,8 @@ from .routers import (
     vocacionUsuario,
     statics,
     users,
-    ciudad
+    ciudad,
+    recursos
 )
 
 app = FastAPI()
@@ -27,6 +28,7 @@ app.include_router(vocacionUsuario.router, prefix="/vocacion", tags=["Vocacion u
 app.include_router(statics.router, prefix="/statics", tags=["Estadisticas tests"])
 app.include_router(users.router, prefix="/users", tags=["Usuarios"])
 app.include_router(ciudad.router, prefix="/city", tags=["Ciudades"])
+app.include_router(recursos.router, prefix="/recurso", tags=["Recursos"])
 
 
 app.add_middleware(
