@@ -107,3 +107,24 @@ def delete_city_service(city_id: int, current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
+
+def list_ciudades_service():
+    db = next(get_db_session())
+    try:
+        ciudades = db.query(Ciudad).all()
+
+        # Estructurar la respuesta
+        response = [
+            {
+                "id": ciudad.id,
+                "nombre": ciudad.nombre,
+                "latitud": ciudad.latitud,
+                "longitud": ciudad.longitud,
+            }
+            for ciudad in ciudades
+        ]
+        return response
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()

@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from ..models.mdl_recurso import RecursoCreate
-from ..services.recurso_service import register_recurso_service
+from ..models.mdl_recurso import RecursoCreate, RecursoUpdate
+from ..services.recurso_service import (
+    delete_recurso_service,
+    edit_recurso_service,
+    list_recursos_service,
+    register_recurso_service,
+)
 from ..services.auth_service import verify_jwt_token
 
 router = APIRouter()
@@ -10,7 +15,7 @@ router = APIRouter()
 security = HTTPBearer()
 
 
-@router.post("/recursos/register")
+@router.post("/register")
 async def register_recurso(
     recurso: RecursoCreate,
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -22,6 +27,48 @@ async def register_recurso(
 
         # Llamar al servicio para registrar el recurso
         response = register_recurso_service(recurso, user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+@router.put("/editar/{recurso_id}")
+async def edit_recurso(
+    recurso_id: int,
+    recurso_data: RecursoUpdate,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    try:
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+        response = edit_recurso_service(recurso_id, recurso_data, user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+@router.delete("/borrar/{recurso_id}")
+async def delete_recurso(
+    recurso_id: int, credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    try:
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+        response = delete_recurso_service(recurso_id, user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+@router.get("/listar")
+async def list_recursos(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        token = credentials.credentials
+        verify_jwt_token(token)
+        response = list_recursos_service()
         return response
     except HTTPException as e:
         raise e
