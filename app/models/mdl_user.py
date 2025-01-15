@@ -4,7 +4,7 @@ from datetime import date
 from typing import Optional
 
 class UsuarioCreate(BaseModel):
-    nombre: str = Field(default="stringst")
+    username: str = Field(default="stringst", alias="nombre")  # Alias correcto de "nombre" a "username"
     email: str = Field(default="string@mail.com")
     edad: int = Field(default=1)
     id_ciudad: Optional[int] = Field(default=1)
@@ -12,13 +12,8 @@ class UsuarioCreate(BaseModel):
     fecha_registro: date = Field(default_factory=date.today)
     password: str = Field(default="stringst")
 
-    @field_validator("edad")
-    def validate_age(cls, value):
-        if value is not None and value <= 0:
-            raise ValueError("La edad debe ser un número entero positivo.")
-        return value
-    
-    @field_validator("nombre")
+    # Validación de los campos (sin renombrar a "username")
+    @field_validator("username")  # Se usa "username" ya que es el campo con el alias
     def validate_nombre(cls, value):
         if len(value) < 2 or len(value) > 50:
             raise ValueError("El nombre debe tener entre 2 y 50 caracteres.")

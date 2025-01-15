@@ -36,7 +36,7 @@ def register_user(user: UsuarioCreate):
         # Crear usuario
         nuevo_usuario = Usuario(
             email=user.email,
-            nombre=user.nombre,
+            nombre=user.username,  # Usamos 'username' aquí, que es el alias del frontend
             edad=user.edad,
             contrasena=hashed_password,
             tipo_usuario="comun",
@@ -57,6 +57,7 @@ def register_user(user: UsuarioCreate):
         # Aquí atrapamos cualquier otra excepción imprevista
         db.rollback()
         raise HTTPException(status_code=500, detail=str(ex))
+
 
 def login_user(email: str, password: str):
     db = next(get_db_session())
