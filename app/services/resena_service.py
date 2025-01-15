@@ -175,11 +175,9 @@ def get_resenas_by_rating_service(rating: int, page: int, limit: int = 5):
 
 
 # Consultar reseñas por ID de usuario
-def get_resenas_by_user_id_service(user_id: int, page: int, limit: int = 5):
+def get_resenas_by_user_id_service(user_id: int):
     db = next(get_db_session())
     try:
-        # Calcular el offset basado en la página
-        skip = (page - 1) * limit
         resenas = (
             db.query(
                 Resena.id,
@@ -191,8 +189,6 @@ def get_resenas_by_user_id_service(user_id: int, page: int, limit: int = 5):
             .join(Usuario, Resena.id_usuario == Usuario.id)
             .filter(Resena.id_usuario == user_id)
             .order_by(Resena.fecha_creacion.desc())
-            .offset(skip)
-            .limit(limit)
             .all()
         )
         return [
@@ -215,6 +211,7 @@ def get_resenas_by_user_id_service(user_id: int, page: int, limit: int = 5):
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
+
 
 
 # Calcular el promedio de puntuaciones

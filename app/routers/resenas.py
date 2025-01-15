@@ -88,12 +88,11 @@ async def filter_reviews_by_rating(
 # 4. Consultar reseñas por ID de usuario (token)
 @router.get("/user")
 async def get_reviews_by_user(
-    page: int = Query(1, gt=0),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
         user_info = verify_jwt_token(credentials.credentials)
-        return get_resenas_by_user_id_service(user_id=user_info["user_id"], page=page)
+        return get_resenas_by_user_id_service(user_id=user_info["user_id"])
     except HTTPException as e:
         raise e
     except Exception as ex:
