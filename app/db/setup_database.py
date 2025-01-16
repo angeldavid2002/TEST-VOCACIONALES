@@ -3,6 +3,8 @@ import os
 from datetime import datetime, timezone
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.schema import DropTable
+from sqlalchemy.ext.compiler import compiles
 
 # Importar servicios y configuraciones
 from ..services.auth_service import get_password_hash
@@ -19,66 +21,85 @@ from ..schemas.sch_respuesta import Respuesta
 from ..schemas.sch_respuesta_usuario import RespuestaDeUsuario
 from ..schemas.sch_vocacion_usuario import VocacionDeUsuarioPorTest
 from ..schemas.sch_resena import Resena
-from ..schemas.sch_recurso import Recurso  # Si existe esta tabla en tu proyecto
+from ..schemas.sch_recurso import Recurso
 
 # Importar configuración de la base de datos
 from .database import engine, get_db_session
 
 
+@compiles(DropTable)
+def add_if_exists(element, compiler, **kwargs):
+    # Extiende DropTable para agregar 'IF EXISTS' a las consultas.
+    return compiler.visit_drop_table(element) + " IF EXISTS"
+
+
 def initialize_database():
-    """
-    Inicializa la base de datos:
-    - Si no existe, la crea con el esquema completo.
-    - Si existe, verifica el esquema y realiza actualizaciones necesarias.
-    """
+    # Inicializa la base de datos:
+    # Si no existe, la crea con el esquema completo.
+    # Si existe, sincroniza completamente el esquema con los modelos.
+
     if not os.path.exists("database.db"):
         print("La base de datos no existe. Creando una nueva...")
         create_schema()
     else:
-        print("La base de datos ya existe. Verificando el esquema...")
-        ensure_schema_updated()
+        print("La base de datos ya existe. Sincronizando esquema...")
+        sync_schema()
 
     # Insertar datos iniciales
     insert_initial_data()
 
 
 def create_schema():
-    """Crea el esquema inicial de la base de datos."""
+    # Crea el esquema inicial de la base de datos.
     Base.metadata.create_all(bind=engine)
     print("Esquema inicial creado.")
 
 
-def ensure_schema_updated():
-    """
-    Verifica que todas las tablas y columnas definidas en los modelos existan en la base de datos.
-    Si alguna tabla o columna falta, la crea o actualiza sin eliminar datos existentes.
-    """
+def sync_schema():
+    # Sincroniza el esquema de la base de datos:
+    # Elimina tablas y columnas que no están definidas en los modelos.
+    # Crea tablas y columnas que faltan en la base de datos.
     inspector = inspect(engine)
     existing_tables = inspector.get_table_names()
 
-    for table_name in Base.metadata.tables.keys():
-        if table_name not in existing_tables:
-            print(f"Tabla '{table_name}' no encontrada. Creándola...")
-            Base.metadata.tables[table_name].create(bind=engine)
+    # Eliminar tablas que no están en los modelos
+    for table_name in existing_tables:
+        if table_name not in Base.metadata.tables:
+            print(f"Tabla '{table_name}' no está en los modelos. Eliminándola...")
+            with engine.connect() as connection:
+                connection.execute(DropTable(Base.metadata.tables.get(table_name)))
 
+    # Crear y actualizar tablas y columnas
+    Base.metadata.create_all(bind=engine)
+
+    # Sincronizar columnas
     with engine.connect() as connection:
         for table_name, table in Base.metadata.tables.items():
-            try:
+            if table_name in existing_tables:
                 columns = inspector.get_columns(table_name)
                 column_names = [col["name"] for col in columns]
 
+                # Eliminar columnas que no están en los modelos
+                for col in columns:
+                    if col["name"] not in table.columns:
+                        print(
+                            f"Columna '{col['name']}' no está en el modelo de la tabla '{table_name}'. Eliminándola..."
+                        )
+                        connection.execute(
+                            text(f"ALTER TABLE {table_name} DROP COLUMN {col['name']}")
+                        )
+
+                # Agregar columnas que faltan en la tabla
                 for column in table.columns:
                     if column.name not in column_names:
                         print(
                             f"Columna '{column.name}' no encontrada en la tabla '{table_name}'. Agregándola..."
                         )
                         alter_table_add_column(connection, table_name, column)
-            except ProgrammingError as e:
-                print(f"Error al verificar la tabla '{table_name}': {e}")
 
 
 def alter_table_add_column(connection, table_name, column):
-    """Agrega una columna a una tabla existente."""
+    # Agrega una columna a una tabla existente.
     column_type = str(column.type.compile(dialect=engine.dialect))
     default_clause = (
         f"DEFAULT {column.default.arg}" if column.default is not None else ""
@@ -98,8 +119,7 @@ def alter_table_add_column(connection, table_name, column):
 
 
 def insert_initial_data():
-    """Inserta datos iniciales si no existen, evitando duplicados."""
-    # Obtener la sesión desde el generador
+    # Inserta datos iniciales si no existen, evitando duplicados.
     session_generator = get_db_session()
     session = next(session_generator)
     try:
@@ -179,23 +199,20 @@ def insert_initial_data():
             admin = Usuario(
                 email=config.ADMIN_EMAIL,
                 nombre=config.ADMIN_NAME,
-                edad=18,
                 contrasena=get_password_hash(config.ADMIN_PASSWORD),
                 tipo_usuario=config.ADMIN_USER_TYPE,
                 fecha_registro=datetime.now(timezone.utc),
             )
             session.add(admin)
 
-        # Confirmar cambios
         session.commit()
         print("Datos iniciales insertados correctamente.")
     except Exception as e:
         session.rollback()
         print(f"Error al insertar datos iniciales: {e}")
     finally:
-        # Cierra la sesión
         session.close()
-        next(session_generator, None)  # Finaliza el generador si corresponde
+        next(session_generator, None)
 
 
 if __name__ == "__main__":

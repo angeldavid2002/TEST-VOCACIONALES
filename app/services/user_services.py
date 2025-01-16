@@ -37,7 +37,6 @@ def register_user(user: UsuarioCreate):
         nuevo_usuario = Usuario(
             email=user.email,
             nombre=user.username,  # Usamos 'username' aquí, que es el alias del frontend
-            edad=user.edad,
             contrasena=hashed_password,
             tipo_usuario="comun",
             id_ciudad=user.id_ciudad,
@@ -105,7 +104,6 @@ def get_user_data_service(current_user):
         return {
             "ID": usuario.id,
             "Nombre": usuario.nombre,
-            "Edad": usuario.edad,
             "Email": usuario.email,
             "Tipo_Usuario": usuario.tipo_usuario,
             "ID_Ciudad": usuario.id_ciudad,

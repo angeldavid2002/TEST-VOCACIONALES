@@ -6,7 +6,6 @@ from typing import Optional
 class UsuarioCreate(BaseModel):
     username: str = Field(default="stringst", alias="nombre")  # Alias correcto de "nombre" a "username"
     email: str = Field(default="string@mail.com")
-    edad: int = Field(default=1)
     id_ciudad: Optional[int] = Field(default=1)
     id_institucion: Optional[int] = Field(default=1)
     fecha_registro: date = Field(default_factory=date.today)
