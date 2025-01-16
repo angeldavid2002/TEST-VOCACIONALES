@@ -51,12 +51,16 @@ def edit_recurso_service(recurso_id: int, recurso_data: RecursoUpdate, current_u
         if not recurso:
             raise HTTPException(status_code=404, detail="Recurso no encontrado.")
 
-        # Actualizar campos del recurso
-        for key, value in recurso_data.dict(exclude_unset=True).items():
-            setattr(recurso, key, value)
+        # Actualizar campos del recurso si están presentes en recurso_data
+        recurso.nombre = recurso_data.nombre if recurso_data.nombre is not None else recurso.nombre
+        recurso.tipo = recurso_data.tipo if recurso_data.tipo is not None else recurso.tipo
+        recurso.autor = recurso_data.autor if recurso_data.autor is not None else recurso.autor
+        recurso.plataforma = recurso_data.plataforma if recurso_data.plataforma is not None else recurso.plataforma
+        recurso.enlace = recurso_data.enlace if recurso_data.enlace is not None else recurso.enlace
 
         db.commit()
         db.refresh(recurso)
+
         return {"message": "Recurso actualizado exitosamente", "id": recurso.id}
     except HTTPException as http_ex:
         raise http_ex

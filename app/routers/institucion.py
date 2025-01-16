@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from ..models.mdl_ciudad import CiudadCreate, CiudadUpdate
-from ..services.ciudad_service import delete_city_service, list_ciudades_service, register_city_service, update_city_service
+from ..models.mdl_institucion import InstitucionCreate, InstitucionUpdate
+from ..services.institucion_service import (
+    register_institucion_service,
+    update_institucion_service,
+    delete_institucion_service,
+    list_instituciones_service,
+)
 from ..services.auth_service import verify_jwt_token
 
 router = APIRouter()
@@ -9,55 +14,47 @@ router = APIRouter()
 # Configuración del esquema de seguridad HTTPBearer
 security = HTTPBearer()
 
+
 @router.post("/register")
-async def register_city(
-    city: CiudadCreate,
+async def register_institucion(
+    institucion: InstitucionCreate,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
-        # Verificar el token del usuario
         token = credentials.credentials
         user_info = verify_jwt_token(token)
-
-        # Llamar al servicio para registrar la ciudad
-        response = register_city_service(city, user_info)
+        response = register_institucion_service(institucion, user_info)
         return response
     except HTTPException as e:
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
-@router.put("/update/{city_id}")
-async def update_city(
-    city_id: int,
-    city: CiudadUpdate,
+@router.put("/update/{id}")
+async def update_institucion(
+    id: int,
+    institucion: InstitucionUpdate,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
-        # Verificar el token del usuario
         token = credentials.credentials
         user_info = verify_jwt_token(token)
-
-        # Llamar al servicio para actualizar la ciudad
-        response = update_city_service(city_id, city, user_info)
+        response = update_institucion_service(id, institucion, user_info)
         return response
     except HTTPException as e:
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
-@router.delete("/delete/{city_id}")
-async def delete_city(
-    city_id: int,
+@router.delete("/delete/{id}")
+async def delete_institucion(
+    id: int,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
-        # Verificar el token del usuario
         token = credentials.credentials
         user_info = verify_jwt_token(token)
-
-        # Llamar al servicio para eliminar la ciudad
-        response = delete_city_service(city_id, user_info)
+        response = delete_institucion_service(id, user_info)
         return response
     except HTTPException as e:
         raise e
@@ -65,9 +62,9 @@ async def delete_city(
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
 @router.get("/list")
-async def list_ciudades():
+async def list_instituciones():
     try:
-        response = list_ciudades_service()
+        response = list_instituciones_service()
         return response
     except HTTPException as e:
         raise e

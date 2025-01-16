@@ -12,7 +12,8 @@ from .routers import (
     statics,
     users,
     ciudad,
-    recursos
+    recursos,
+    institucion
 )
 
 app = FastAPI()
@@ -29,7 +30,7 @@ app.include_router(statics.router, prefix="/statics", tags=["Estadisticas tests"
 app.include_router(users.router, prefix="/users", tags=["Usuarios"])
 app.include_router(ciudad.router, prefix="/city", tags=["Ciudades"])
 app.include_router(recursos.router, prefix="/recurso", tags=["Recursos"])
-
+app.include_router(institucion.router, prefix="/institucion", tags=["Institucion"])
 
 app.add_middleware(
         CORSMiddleware,

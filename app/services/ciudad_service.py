@@ -3,6 +3,7 @@ from ..db.database import get_db_session
 from ..schemas.sch_ciudad import Ciudad
 from ..models.mdl_ciudad import CiudadCreate, CiudadUpdate
 
+
 def register_city_service(city: CiudadCreate, current_user):
     # Verificar si el usuario tiene privilegios de administrador
     if current_user.get("tipo_usuario") != "admin":
@@ -60,9 +61,15 @@ def update_city_service(city_id: int, city: CiudadUpdate, current_user):
             )
 
         # Actualizar los campos de la ciudad
-        ciudad_existente.nombre = city.nombre if city.nombre else ciudad_existente.nombre
-        ciudad_existente.latitud = city.latitud if city.latitud is not None else ciudad_existente.latitud
-        ciudad_existente.longitud = city.longitud if city.longitud is not None else ciudad_existente.longitud
+        ciudad_existente.nombre = (
+            city.nombre if city.nombre else ciudad_existente.nombre
+        )
+        ciudad_existente.latitud = (
+            city.latitud if city.latitud is not None else ciudad_existente.latitud
+        )
+        ciudad_existente.longitud = (
+            city.longitud if city.longitud is not None else ciudad_existente.longitud
+        )
 
         # Guardar los cambios en la base de datos
         db.commit()
@@ -124,6 +131,8 @@ def list_ciudades_service():
             for ciudad in ciudades
         ]
         return response
+    except HTTPException as e:
+        raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:

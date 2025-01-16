@@ -64,10 +64,8 @@ async def delete_recurso(
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
 @router.get("/listar")
-async def list_recursos(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def list_recursos():
     try:
-        token = credentials.credentials
-        verify_jwt_token(token)
         response = list_recursos_service()
         return response
     except HTTPException as e:
