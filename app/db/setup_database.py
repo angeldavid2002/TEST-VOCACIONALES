@@ -199,6 +199,7 @@ def insert_initial_data():
             admin = Usuario(
                 email=config.ADMIN_EMAIL,
                 nombre=config.ADMIN_NAME,
+                sexo="Masculino",
                 contrasena=get_password_hash(config.ADMIN_PASSWORD),
                 tipo_usuario=config.ADMIN_USER_TYPE,
                 fecha_registro=datetime.now(timezone.utc),

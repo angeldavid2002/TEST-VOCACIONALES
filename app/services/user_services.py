@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from ..db.database import get_db_session
-from ..models.mdl_user import UsuarioCreate
+from ..models.mdl_user import UsuarioCreate, UsuarioUpdate
 from ..schemas.sch_usuario import Usuario,Ciudad,Institucion
 from .auth_service import *
 
@@ -37,6 +37,7 @@ def register_user(user: UsuarioCreate):
         nuevo_usuario = Usuario(
             email=user.email,
             nombre=user.username,  # Usamos 'username' aquí, que es el alias del frontend
+            sexo=user.sexo,
             contrasena=hashed_password,
             tipo_usuario="comun",
             id_ciudad=user.id_ciudad,
@@ -56,7 +57,6 @@ def register_user(user: UsuarioCreate):
         # Aquí atrapamos cualquier otra excepción imprevista
         db.rollback()
         raise HTTPException(status_code=500, detail=str(ex))
-
 
 def login_user(email: str, password: str):
     db = next(get_db_session())
@@ -105,6 +105,7 @@ def get_user_data_service(current_user):
             "ID": usuario.id,
             "Nombre": usuario.nombre,
             "Email": usuario.email,
+            "Sexo": usuario.sexo,
             "Tipo_Usuario": usuario.tipo_usuario,
             "ID_Ciudad": usuario.id_ciudad,
             "ID_Institucion": usuario.id_institucion,
@@ -145,6 +146,47 @@ def change_password_service(password_request, current_user):
         db.commit()
 
         return {"message": "Contraseña actualizada exitosamente."}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()
+
+def edit_user_service(user_data: UsuarioUpdate, current_user):
+    # Extraer el ID del usuario actual desde el token
+    user_id = current_user.get("user_id")
+
+    db = next(get_db_session())
+    try:
+        usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+        # Campos no permitidos para modificar
+        campos_no_editables = {"email", "id", "tipo_usuario", "fecha_registro"}
+
+        # Actualizar solo los campos permitidos y proporcionados
+        for key, value in user_data.dict(exclude_unset=True).items():
+            if key not in campos_no_editables:
+                setattr(usuario, key, value)
+
+        db.commit()
+        db.refresh(usuario)
+
+        return {
+            "message": "Usuario actualizado exitosamente",
+            "usuario": {
+                "id": usuario.id,
+                "nombre": usuario.nombre,
+                "sexo": usuario.sexo,
+                "email": usuario.email,
+                "id_ciudad": usuario.id_ciudad,
+                "id_institucion": usuario.id_institucion,
+                "fecha_registro": usuario.fecha_registro,
+            },
+        }
     except HTTPException as http_ex:
         raise http_ex
     except Exception as ex:

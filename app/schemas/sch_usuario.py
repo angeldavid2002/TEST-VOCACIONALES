@@ -10,6 +10,7 @@ class Usuario(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True)
+    sexo = Column(String, nullable=False, default="Masculino")
     contrasena = Column(String, nullable=False)
     tipo_usuario = Column(String, nullable=False, default="comun")
     id_ciudad = Column(Integer, ForeignKey("ciudades.id"), nullable=True)

@@ -2,8 +2,6 @@ from datetime import date
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
-
-
 class ResenaCreate(BaseModel):
     comentario: str 
     puntuacion: int = Field(default=1)
