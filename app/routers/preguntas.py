@@ -16,23 +16,23 @@ router = APIRouter()
 # Configurar el esquema de seguridad HTTPBearer
 security = HTTPBearer()
 
-# 1. Listar preguntas por Test_ID
+# 1. Endpoint para listar preguntas por Test_ID sin paginación
 @router.get("/list/{test_id}")
 async def get_preguntas_by_test(
     test_id: int,
-    page: int = Query(default=1, gt=0),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
         token = credentials.credentials
         user_info = verify_jwt_token(token)
-        response = list_preguntas_by_test(test_id, page, user_info)
+
+        # Obtener las preguntas asociadas al test
+        response = list_preguntas_by_test(test_id, user_info)
         return response
     except HTTPException as e:
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
-
 
 # 2. Buscar pregunta por ID
 @router.get("/search/{pregunta_id}")
@@ -50,7 +50,6 @@ async def get_pregunta_by_id(
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
-
 # 3. Crear pregunta
 @router.post("/create")
 async def create_pregunta(
@@ -67,7 +66,6 @@ async def create_pregunta(
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
-
 # 4. Editar pregunta
 @router.put("/update")
 async def update_pregunta(
@@ -83,7 +81,6 @@ async def update_pregunta(
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
-
 
 # 5. Eliminar pregunta
 @router.delete("/delete/{pregunta_id}")

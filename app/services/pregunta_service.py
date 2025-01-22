@@ -8,7 +8,7 @@ from ..models.mdl_pregunta import PreguntaCreate, PreguntaUpdate
 
 
 # Listar preguntas por Test_ID
-def list_preguntas_by_test(test_id: int, page: int, current_user):
+def list_preguntas_by_test(test_id: int, current_user):
     if not current_user:
         raise HTTPException(status_code=401, detail="No está autorizado.")
 
@@ -21,28 +21,16 @@ def list_preguntas_by_test(test_id: int, page: int, current_user):
                 status_code=404, detail="El test especificado no existe."
             )
 
-        # Paginación
-        page_size = 5
-        offset = (page - 1) * page_size
+        # Obtener todas las preguntas asociadas al test
+        preguntas = db.query(Pregunta).filter(Pregunta.test_id == test_id).all()
 
-        preguntas = (
-            db.query(Pregunta)
-            .filter(Pregunta.test_id == test_id)
-            .offset(offset)
-            .limit(page_size)
-            .all()
-        )
-        total_preguntas = db.query(Pregunta).filter(Pregunta.test_id == test_id).count()
+        if not preguntas:
+            raise HTTPException(
+                status_code=404, detail="No se encontraron preguntas para este test."
+            )
 
-        return {
-            "data": [{"id": p.id, "enunciado": p.enunciado} for p in preguntas],
-            "pagination": {
-                "total": total_preguntas,
-                "page": page,
-                "page_size": page_size,
-                "total_pages": (total_preguntas + page_size - 1) // page_size,
-            },
-        }
+        # Retornar las preguntas como lista
+        return [{"id": p.id, "enunciado": p.enunciado} for p in preguntas]
     except HTTPException as http_ex:
         # Propagar excepciones HTTP específicas
         db.rollback()
@@ -53,7 +41,6 @@ def list_preguntas_by_test(test_id: int, page: int, current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
-
 
 # Buscar pregunta por ID
 def search_pregunta_by_id(pregunta_id: int, current_user):
@@ -85,7 +72,6 @@ def search_pregunta_by_id(pregunta_id: int, current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
-
 
 # Crear pregunta
 def create_pregunta_service(pregunta: PreguntaCreate, current_user):
@@ -126,7 +112,6 @@ def create_pregunta_service(pregunta: PreguntaCreate, current_user):
     finally:
         db.close()
 
-
 # Editar pregunta
 def update_pregunta_service(pregunta_r: PreguntaUpdate, current_user):
     if not current_user or current_user["tipo_usuario"] != "admin":
@@ -161,7 +146,6 @@ def update_pregunta_service(pregunta_r: PreguntaUpdate, current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
-
 
 # Eliminar pregunta
 def delete_pregunta_service(pregunta_id: int, current_user):
@@ -199,5 +183,44 @@ def delete_pregunta_service(pregunta_id: int, current_user):
         # Manejar excepciones no controladas
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()
+
+    # Verificar si el usuario tiene privilegios de administrador
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para acceder a esta información.",
+        )
+
+    db = next(get_db_session())
+    try:
+        # Consultar todas las preguntas en la base de datos
+        questions = db.query(Pregunta).all()
+
+        if not questions:
+            raise HTTPException(
+                status_code=404,
+                detail="No se encontraron preguntas registradas.",
+            )
+
+        # Formatear resultados en una lista de diccionarios
+        response = [
+            {
+                "ID": pregunta.id,
+                "Pregunta": pregunta.texto,
+                "Categoria": pregunta.categoria,
+                "Creado_En": pregunta.fecha_creacion,
+            }
+            for pregunta in questions
+        ]
+
+        return response
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        raise HTTPException(
+            status_code=500, detail=f"Error interno: {str(ex)}"
+        )
     finally:
         db.close()
