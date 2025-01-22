@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ..services.statics_service import (
     contar_total_tests,
+    get_most_common_vocation_per_gender_service,
     get_most_common_vocation_per_institution_service,
     list_cities_with_users_service,
     list_usuarios_por_institucion_service,
@@ -110,6 +111,24 @@ async def get_most_common_vocation_per_institution(
 
         # Obtener vocación más común por institución
         response = get_most_common_vocation_per_institution_service(user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+# 7. Vocación más común por sexo (solo admin)
+@router.get("/gender/vocation")
+async def get_most_common_vocation_per_gender(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    try:
+        # Verificar el token
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+
+        # Obtener vocación más común por sexo
+        response = get_most_common_vocation_per_gender_service(user_info)
         return response
     except HTTPException as e:
         raise e

@@ -61,7 +61,6 @@ def list_cities_with_users_service(current_user):
     finally:
         db.close()
 
-
 # Servicio para listar usuarios por institución
 def list_usuarios_por_institucion_service(current_user):
     # Verificar si el usuario tiene rol de administrador
@@ -107,7 +106,6 @@ def list_usuarios_por_institucion_service(current_user):
     finally:
         db.close()
 
-
 # Servicio para obtener moda mas comun
 def obtener_moda_vocacion_mas_comun(current_user):
     # Verificar si el usuario es administrador
@@ -152,7 +150,6 @@ def obtener_moda_vocacion_mas_comun(current_user):
     finally:
         db.close()
 
-
 # Servicio para contar los test
 def contar_total_tests(current_user):
     # Verificar si el usuario es administrador
@@ -181,7 +178,6 @@ def contar_total_tests(current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
-
 
 # Servicio para obtener la vocacion mas comun por ciudad
 def vocacion_mas_comun_por_ciudad_service(current_user):
@@ -311,6 +307,67 @@ def get_most_common_vocation_per_institution_service(current_user):
             raise HTTPException(
                 status_code=404,
                 detail="No se encontraron datos para las instituciones.",
+            )
+
+        return response
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()
+
+# Servicio de vocación más común por sexo 
+def get_most_common_vocation_per_gender_service(current_user):
+    # Verificar si el usuario tiene privilegios de administrador
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para acceder a esta información.",
+        )
+
+    db = next(get_db_session())
+    try:
+        # Subconsulta para encontrar la moda de vocación por sexo
+        subquery = (
+            db.query(
+                Usuario.sexo,
+                VocacionDeUsuarioPorTest.moda_vocacion,
+                func.count(VocacionDeUsuarioPorTest.moda_vocacion).label("vocacion_count"),
+            )
+            .join(
+                VocacionDeUsuarioPorTest,
+                Usuario.id == VocacionDeUsuarioPorTest.id_usuario,
+            )
+            .group_by(Usuario.sexo, VocacionDeUsuarioPorTest.moda_vocacion)
+            .subquery()
+        )
+
+        # Consulta principal para combinar sexo con la moda de vocaciones
+        result = (
+            db.query(
+                subquery.c.sexo,
+                subquery.c.moda_vocacion,
+                func.max(subquery.c.vocacion_count).label("max_count"),
+            )
+            .group_by(subquery.c.sexo, subquery.c.moda_vocacion)
+            .having(func.max(subquery.c.vocacion_count) == subquery.c.vocacion_count)
+            .all()
+        )
+
+        # Formatear resultados en una lista de diccionarios
+        response = [
+            {
+                "Sexo": row.sexo,
+                "Moda_Vocacion": row.moda_vocacion,
+            }
+            for row in result
+        ]
+
+        if not response:
+            raise HTTPException(
+                status_code=404,
+                detail="No se encontraron datos para las vocaciones por sexo.",
             )
 
         return response
