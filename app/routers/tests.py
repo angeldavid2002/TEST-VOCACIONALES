@@ -3,6 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ..services.auth_service import verify_jwt_token
 from ..services.test_service import (
     create_test_service,
+    get_test_by_id_service,
     list_tests_service,
     delete_test_service,
     update_test_service,
@@ -58,6 +59,10 @@ async def list_tests(
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
+# Obterner test por id
+@router.get("/{test_id}", response_model=dict)
+def get_test_by_id(test_id: int):
+    return get_test_by_id_service(test_id)
 
 # 3. Eliminar tests
 @router.delete("/{test_id}")

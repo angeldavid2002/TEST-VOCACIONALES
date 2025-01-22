@@ -8,6 +8,8 @@ from ..schemas.sch_pregunta import Pregunta
 from ..db.database import get_db_session
 
 
+
+
 # Crear un nuevo test
 def create_test_service(test: TestCreate, current_user):
     # Verificar si el usuario tiene rol de administrador
@@ -98,6 +100,57 @@ def list_tests_service():
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
+
+#Obtener test por id
+
+
+def get_test_by_id_service(test_id: int):
+    db = next(get_db_session())  # Obtener una sesión
+    try:
+        # Crear la consulta para obtener el test con el total de preguntas
+        query = db.query(
+            Test.id,
+            Test.nombre,
+            Test.descripcion,
+            Test.fecha_creacion,
+            Test.fecha_actualizacion,
+            func.count(Pregunta.id).label("total_preguntas"),
+        ).outerjoin(
+            Pregunta, Test.id == Pregunta.test_id
+        ).filter(
+            Test.id == test_id
+        ).group_by(
+            Test.id,
+            Test.nombre,
+            Test.descripcion,
+            Test.fecha_creacion,
+            Test.fecha_actualizacion,
+        )
+
+        # Ejecutar la consulta
+        test = query.first()
+
+        # Validar si el test existe
+        if not test:
+            raise HTTPException(status_code=404, detail="Test no encontrado")
+
+        # Formatear la respuesta
+        return {
+            "id": test.id,
+            "nombre": test.nombre,
+            "descripcion": test.descripcion,
+            "fecha_creacion": test.fecha_creacion,
+            "fecha_actualizacion": test.fecha_actualizacion,
+            "total_preguntas": test.total_preguntas,
+        }
+    except HTTPException as http_ex:
+        # Propagar las excepciones HTTP específicas
+        raise http_ex
+    except Exception as ex:
+        # Manejar excepciones no previstas
+        raise HTTPException(status_code=500, detail=f"Error al consultar el test: {str(ex)}")
+    finally:
+        db.close()  # Cerrar la sesión
 
 
 # eliminar test
