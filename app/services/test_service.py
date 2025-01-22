@@ -47,13 +47,10 @@ def create_test_service(test: TestCreate, current_user):
     finally:
         db.close()
 
-# Listar tests con múltiples filtros
-def list_tests_service(page: int, nombre: str = None, fecha_actualizacion: str = None):
+# Listar tests
+def list_tests_service():
     db = next(get_db_session())
     try:
-        page_size = 10
-        offset = (page - 1) * page_size
-
         # Crear la consulta base con el cálculo de total de preguntas
         query = db.query(
             Test.id,
@@ -61,18 +58,10 @@ def list_tests_service(page: int, nombre: str = None, fecha_actualizacion: str =
             Test.descripcion,
             Test.fecha_creacion,
             Test.fecha_actualizacion,
-            func.count(Pregunta.id).label(
-                "total_preguntas"
-            ),  # Contar total de preguntas por test
+            func.count(Pregunta.id).label("total_preguntas"),  # Contar total de preguntas por test
         ).outerjoin(
             Pregunta, Test.id == Pregunta.test_id
         )  # Outer join para calcular preguntas
-
-        # Aplicar filtros opcionales
-        if nombre:
-            query = query.filter(Test.nombre.ilike(f"%{nombre}%"))
-        if fecha_actualizacion:
-            query = query.filter(Test.fecha_actualizacion == fecha_actualizacion)
 
         # Agrupar por Test.id para el cálculo de total_preguntas
         query = query.group_by(
@@ -83,14 +72,8 @@ def list_tests_service(page: int, nombre: str = None, fecha_actualizacion: str =
             Test.fecha_actualizacion,
         )
 
-        # Obtener los tests paginados y contar el total
-        tests = (
-            query.order_by(Test.fecha_creacion.desc())
-            .offset(offset)
-            .limit(page_size)
-            .all()
-        )
-        total_tests = query.count()  # Contar el total de tests (sin límite)
+        # Obtener todos los tests sin limitación ni paginación
+        tests = query.all()
 
         return {
             "data": [
@@ -103,13 +86,7 @@ def list_tests_service(page: int, nombre: str = None, fecha_actualizacion: str =
                     "total_preguntas": test.total_preguntas,
                 }
                 for test in tests
-            ],
-            "pagination": {
-                "total": total_tests,
-                "page": page,
-                "page_size": page_size,
-                "total_pages": (total_tests + page_size - 1) // page_size,
-            },
+            ]
         }
     except HTTPException as http_ex:
         # Propagar las excepciones HTTP específicas
@@ -121,6 +98,7 @@ def list_tests_service(page: int, nombre: str = None, fecha_actualizacion: str =
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
+
 
 # eliminar test
 def delete_test_service(test_id: int, current_user):

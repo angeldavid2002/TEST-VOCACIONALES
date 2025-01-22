@@ -41,9 +41,6 @@ async def create_test(
 # 2. Listar tests
 @router.get("/list")
 async def list_tests(
-    page: int = Query(default=1, gt=0),
-    nombre: str = Query(default=None),
-    fecha_actualizacion: str = Query(default=None),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
@@ -53,13 +50,14 @@ async def list_tests(
         # Verificar el token y obtener información del usuario
         user_info = verify_jwt_token(token)
 
-        # Llamar al servicio para listar los tests
-        response = list_tests_service(page, nombre, fecha_actualizacion)
+        # Llamar al servicio para listar todos los tests sin paginación
+        response = list_tests_service()
         return response
     except HTTPException as e:
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
 
 # 3. Eliminar tests
 @router.delete("/{test_id}")
