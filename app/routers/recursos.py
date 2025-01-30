@@ -4,6 +4,7 @@ from ..models.mdl_recurso import RecursoCreate, RecursoUpdate
 from ..services.recurso_service import (
     delete_recurso_service,
     edit_recurso_service,
+    get_total_recursos,
     list_recursos_service,
     register_recurso_service,
 )
@@ -71,6 +72,21 @@ async def list_recursos(
         token = credentials.credentials
         verify_jwt_token(token)
         response = list_recursos_service()
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+@router.get("/total")
+async def get_total_recursos_endpoint(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    try:
+        token = credentials.credentials
+        verify_jwt_token(token)
+        # Obtener el total de recursos
+        response = get_total_recursos()
         return response
     except HTTPException as e:
         raise e

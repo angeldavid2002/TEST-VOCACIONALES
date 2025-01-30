@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import func
 from ..db.database import get_db_session
 from ..schemas.sch_recurso import Recurso
 from ..models.mdl_recurso import RecursoCreate, RecursoUpdate
@@ -104,3 +105,17 @@ def list_recursos_service():
     finally:
         db.close()
 
+def get_total_recursos():
+    db = next(get_db_session())
+    try:
+        # Contar el total de recursos en la base de datos
+        total_recursos = db.query(func.count(Recurso.id)).scalar()
+        return {"total_recursos": total_recursos}
+    except HTTPException as http_ex:
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()
