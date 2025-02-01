@@ -1,7 +1,7 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ..models.mdl_resena import ResenaCreate
-from ..services.resena_service import create_resena_service
 from ..services.auth_service import verify_jwt_token
 from ..services.resena_service import (
     create_resena_service,
@@ -13,7 +13,8 @@ from ..services.resena_service import (
     edit_resena_service,
     delete_resena_service,
     count_total_resenas_service,
-    count_resenas_by_rating_service
+    count_resenas_by_rating_service,
+    get_all_reviews_service
 )
 
 router = APIRouter()
@@ -184,3 +185,13 @@ async def count_resenas_by_rating(rating: int):
         raise HTTPException(
             status_code=500, detail=f"Error interno: {str(ex)}"
         )
+
+@router.get("/all")
+async def get_all_reviews():
+    try:
+        return get_all_reviews_service()
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+

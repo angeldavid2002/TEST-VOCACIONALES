@@ -213,7 +213,6 @@ def get_resenas_by_user_id_service(user_id: int):
         db.close()
 
 
-
 # Calcular el promedio de puntuaciones
 def get_average_rating_service() -> float:
     db = next(get_db_session())
@@ -354,6 +353,43 @@ def count_resenas_by_rating_service(rating: int) -> int:
         raise http_ex
     except Exception as ex:
         # Propagar las excepciones HTTP no manejadas
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
+    finally:
+        db.close()
+
+
+# Consultar todas las reseñas organizadas de más antigua a más reciente
+def get_all_reviews_service():
+    db = next(get_db_session())
+    try:
+        resenas = (
+            db.query(
+                Resena.id,
+                Resena.comentario,
+                Resena.puntuacion,
+                Resena.fecha_creacion,
+                Usuario.nombre.label("nombre_usuario"),
+            )
+            .join(Usuario, Resena.id_usuario == Usuario.id)
+            .order_by(Resena.fecha_creacion.asc())
+            .all()
+        )
+
+        return [
+            {
+                "id": r.id,
+                "comentario": r.comentario,
+                "puntuacion": r.puntuacion,
+                "fecha_creacion": r.fecha_creacion,
+                "nombre_usuario": r.nombre_usuario,
+            }
+            for r in resenas
+        ]
+    except HTTPException as http_ex:
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
