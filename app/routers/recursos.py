@@ -77,10 +77,6 @@ async def list_recursos(
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
-<<<<<<< HEAD
-    
-
-=======
 
 @router.get("/total")
 async def get_total_recursos_endpoint(
@@ -96,4 +92,3 @@ async def get_total_recursos_endpoint(
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
->>>>>>> 5389e873a92c08d700a5c5313746f459bc044230
