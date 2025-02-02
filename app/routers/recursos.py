@@ -65,18 +65,17 @@ async def delete_recurso(
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
 @router.get("/listar")
-async def list_recursos(
-    recurso_id: int, credentials: HTTPAuthorizationCredentials = Depends(security)
-    ):
+async def list_recursos(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         token = credentials.credentials
-        verify_jwt_token(token)
-        response = list_recursos_service()
+        verify_jwt_token(token)  # Verificar JWT
+        response = list_recursos_service()  # Obtener todos los recursos
         return response
     except HTTPException as e:
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
 
 @router.get("/total")
 async def get_total_recursos_endpoint(
