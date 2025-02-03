@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy import func
 
+from ..schemas.sch_pregunta import Pregunta
+from ..schemas.sch_respuesta_usuario import RespuestaDeUsuario
 from ..schemas.sch_test import Test
 from ..schemas.sch_vocacion_usuario import VocacionDeUsuarioPorTest
 from ..schemas.sch_institucion import Institucion
@@ -401,3 +403,51 @@ def count_non_admin_users_service(current_user):
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
+
+# Servicio de conteo de test completados
+def count_completed_tests_service(current_user: dict):
+    # Verificar si el usuario tiene privilegios de administrador
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para acceder a esta información.",
+        )
+        
+    db = next(get_db_session())
+    try:
+        # Subconsulta: para cada test y usuario, contamos cuántas respuestas registró el usuario,
+        # y obtenemos el total de preguntas del test.
+        subquery = (
+            db.query(
+                RespuestaDeUsuario.test_id.label("test_id"),
+                RespuestaDeUsuario.usuario_id.label("usuario_id"),
+                func.count(RespuestaDeUsuario.pregunta_id).label("cnt"),
+                # Usamos scalar_subquery() para obtener el total de preguntas para cada test.
+                db.query(func.count(Pregunta.id))
+                .filter(Pregunta.test_id == RespuestaDeUsuario.test_id)
+                .scalar_subquery()
+                .label("total_questions")
+            )
+            .group_by(RespuestaDeUsuario.test_id, RespuestaDeUsuario.usuario_id)
+            .subquery()
+        )
+        
+        # Filtrar solo las combinaciones en las que el usuario respondió todas las preguntas,
+        # y luego contar de forma distinta los test (es decir, test que fueron completados por al menos un usuario)
+        total_complete_tests = (
+            db.query(func.count(func.distinct(subquery.c.test_id)))
+            .filter(subquery.c.cnt == subquery.c.total_questions)
+            .scalar()
+        )
+
+        return {
+            "total_test_respondidos": total_complete_tests,
+        }
+    except HTTPException as http_ex:
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close() 
