@@ -21,13 +21,12 @@ security = HTTPBearer()
 @router.get("/list/{pregunta_id}")
 async def get_respuestas_by_pregunta(
     pregunta_id: int,
-    page: int = Query(default=1, gt=0),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
         token = credentials.credentials
         user_info = verify_jwt_token(token)
-        response = list_respuestas_by_pregunta(pregunta_id, page, user_info)
+        response = list_respuestas_by_pregunta(pregunta_id, user_info)
         return response
     except HTTPException as e:
         raise e

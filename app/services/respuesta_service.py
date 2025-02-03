@@ -8,7 +8,7 @@ from ..models.mdl_respuesta import RespuestaCreate, RespuestaUpdate
 
 
 # Listar respuestas por pregunta_id
-def list_respuestas_by_pregunta(pregunta_id: int, page: int, current_user):
+def list_respuestas_by_pregunta(pregunta_id: int, current_user):
     if not current_user:
         raise HTTPException(status_code=401, detail="No está autorizado.")
 
@@ -21,15 +21,10 @@ def list_respuestas_by_pregunta(pregunta_id: int, page: int, current_user):
                 status_code=404, detail="La pregunta especificada no existe."
             )
 
-        # Paginación
-        page_size = 5
-        offset = (page - 1) * page_size
 
         respuestas = (
             db.query(Respuesta)
             .filter(Respuesta.pregunta_id == pregunta_id)
-            .offset(offset)
-            .limit(page_size)
             .all()
         )
         total_respuestas = (
@@ -40,13 +35,7 @@ def list_respuestas_by_pregunta(pregunta_id: int, page: int, current_user):
             "data": [
                 {"id": r.id, "respuesta": r.respuesta, "vocacion": r.vocacion}
                 for r in respuestas
-            ],
-            "pagination": {
-                "total": total_respuestas,
-                "page": page,
-                "page_size": page_size,
-                "total_pages": (total_respuestas + page_size - 1) // page_size,
-            },
+            ]
         }
     except HTTPException as http_ex:
         # Propagar las excepciones HTTP específicas
@@ -58,7 +47,6 @@ def list_respuestas_by_pregunta(pregunta_id: int, page: int, current_user):
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
-
 
 # Buscar respuesta por ID
 def search_respuesta_by_id(respuesta_id: int, current_user):
@@ -90,7 +78,6 @@ def search_respuesta_by_id(respuesta_id: int, current_user):
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
-
 
 # Crear respuesta
 def create_respuesta_service(respuesta: RespuestaCreate, current_user):
@@ -135,7 +122,6 @@ def create_respuesta_service(respuesta: RespuestaCreate, current_user):
     finally:
         db.close()
 
-
 # Editar respuesta
 def update_respuesta_service(respuesta: RespuestaUpdate,respuesta_id, current_user):
     if not current_user or current_user["tipo_usuario"] != "admin":
@@ -171,7 +157,6 @@ def update_respuesta_service(respuesta: RespuestaUpdate,respuesta_id, current_us
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
-
 
 # Eliminar respuesta
 def delete_respuesta_service(respuesta_id: int, current_user):
