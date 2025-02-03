@@ -377,3 +377,27 @@ def get_most_common_vocation_per_gender_service(current_user):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
+
+# Servicio de conteo de usuarios
+def count_non_admin_users_service(current_user):
+    # Verificar si el usuario tiene privilegios de administrador
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para acceder a esta información.",
+        )
+
+    db = next(get_db_session())
+    try:
+        # Contar usuarios que no sean administradores
+        total_usuarios = db.query(Usuario).filter(Usuario.tipo_usuario != "admin").count()
+
+        return {"total_usuarios": total_usuarios}
+    except HTTPException as http_ex:
+        db.rollback()
+        raise http_ex
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
+    finally:
+        db.close()

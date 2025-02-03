@@ -27,14 +27,7 @@ class PreguntaCreate(BaseModel):
         return value
 
 class PreguntaUpdate(BaseModel):
-    pregunta_id: int
     enunciado: str
-
-    @field_validator("pregunta_id")
-    def validate_pregunta_id(cls, value):
-        if not isinstance(value, int):
-            raise ValueError("el id debe ser un número entero.")
-        return value
 
     @field_validator("enunciado")
     def validate_enunciado(cls, value):

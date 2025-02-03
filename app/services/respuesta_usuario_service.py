@@ -143,7 +143,7 @@ def create_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioCreate, c
 
 
 # 4. Editar respuesta de usuario
-def update_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioUpdate, current_user):
+def update_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioUpdate,test_id, current_user):
     if not current_user:
         raise HTTPException(status_code=401, detail="No está autorizado.")
 
@@ -152,7 +152,7 @@ def update_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioUpdate, c
         respuesta_usuario = (
             db.query(RespuestaDeUsuario)
             .filter(
-                RespuestaDeUsuario.test_id == respuesta_data.test_id,
+                RespuestaDeUsuario.test_id == test_id,
                 RespuestaDeUsuario.pregunta_id == respuesta_data.pregunta_id,
                 RespuestaDeUsuario.usuario_id == current_user["user_id"],
             )

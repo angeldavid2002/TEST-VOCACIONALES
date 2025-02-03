@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ..services.statics_service import (
     contar_total_tests,
+    count_non_admin_users_service,
     get_most_common_vocation_per_gender_service,
     get_most_common_vocation_per_institution_service,
     list_cities_with_users_service,
@@ -130,6 +131,22 @@ async def get_most_common_vocation_per_gender(
         # Obtener vocación más común por sexo
         response = get_most_common_vocation_per_gender_service(user_info)
         return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+@router.get("/users/count")
+async def get_non_admin_user_count(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    try:
+        # Verificar el token y obtener la información del usuario
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+
+        # Obtener el total de usuarios no administradores
+        return count_non_admin_users_service(user_info)
     except HTTPException as e:
         raise e
     except Exception as ex:

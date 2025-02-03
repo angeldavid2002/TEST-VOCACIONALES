@@ -137,7 +137,7 @@ def create_respuesta_service(respuesta: RespuestaCreate, current_user):
 
 
 # Editar respuesta
-def update_respuesta_service(respuesta: RespuestaUpdate, current_user):
+def update_respuesta_service(respuesta: RespuestaUpdate,respuesta_id, current_user):
     if not current_user or current_user["tipo_usuario"] != "admin":
         raise HTTPException(
             status_code=403,
@@ -148,7 +148,7 @@ def update_respuesta_service(respuesta: RespuestaUpdate, current_user):
     try:
         # Verificar que la respuesta existe
         respuesta_db = (
-            db.query(Respuesta).filter(Respuesta.id == respuesta.respuesta_id).first()
+            db.query(Respuesta).filter(Respuesta.id == respuesta_id).first()
         )
         if not respuesta_db:
             raise HTTPException(

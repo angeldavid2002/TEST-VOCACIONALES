@@ -38,15 +38,8 @@ class RespuestaDeUsuarioCreate(BaseModel):
 
 # Modelo para actualizar una respuesta de usuario existente
 class RespuestaDeUsuarioUpdate(BaseModel):
-    test_id: int = Field(default=1)
     pregunta_id: int = Field(default=1)
     respuesta_id: Optional[int] = Field(default=1)
-
-    @field_validator("test_id")
-    def validate_test_id(cls, value):
-        if not isinstance(value, int) or value < 1:
-            raise ValueError("El ID del test debe ser un número entero positivo.")
-        return value
 
     @field_validator("pregunta_id")
     def validate_pregunta_id(cls, value):

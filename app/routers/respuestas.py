@@ -70,15 +70,16 @@ async def create_respuesta(
 
 
 # 4. Editar respuesta
-@router.put("/update")
+@router.put("/update/{respuesta_id}")
 async def update_respuesta(
+    respuesta_id:int,
     respuesta: RespuestaUpdate,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
         token = credentials.credentials
         user_info = verify_jwt_token(token)
-        response = update_respuesta_service(respuesta, user_info)
+        response = update_respuesta_service(respuesta,respuesta_id, user_info)
         return response
     except HTTPException as e:
         raise e

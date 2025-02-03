@@ -36,19 +36,12 @@ class RespuestaCreate(BaseModel):
 
 # Modelo para actualizar una respuesta existente
 class RespuestaUpdate(BaseModel):
-    respuesta_id: int = Field(default=1)
     respuesta: Optional[str] = Field(
         default=None, description="Texto de la respuesta a actualizar."
     )
     vocacion: Optional[str] = Field(
         default=None, description="Vocación asociada a la respuesta a actualizar."
     )
-
-    @field_validator("respuesta_id")
-    def validate_respuesta_id(cls, value):
-        if not isinstance(value, int):
-            raise ValueError("el id debe ser un número entero.")
-        return value
 
     @field_validator("respuesta")
     def validate_respuesta(cls, value):

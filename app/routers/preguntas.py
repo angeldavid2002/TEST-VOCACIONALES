@@ -67,15 +67,16 @@ async def create_pregunta(
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
 # 4. Editar pregunta
-@router.put("/update")
+@router.put("/update/{pregunta_id}")
 async def update_pregunta(
+    pregunta_id: int,
     pregunta: PreguntaUpdate,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
         token = credentials.credentials
         user_info = verify_jwt_token(token)
-        response = update_pregunta_service(pregunta, user_info)
+        response = update_pregunta_service(pregunta,pregunta_id, user_info)
         return response
     except HTTPException as e:
         raise e
