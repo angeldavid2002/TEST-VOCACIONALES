@@ -5,9 +5,7 @@ from typing import Optional
 
 
 class UsuarioCreate(BaseModel):
-    username: str = Field(
-        default="stringst", alias="nombre"
-    )  # Alias correcto de "nombre" a "username"
+    nombre: str = Field(default="stringst")
     email: str = Field(default="string@mail.com")
     sexo: Optional[str] = Field(default="Masculino")  # Masculino - Femenino
     id_ciudad: Optional[int] = Field(default=1)
@@ -16,7 +14,7 @@ class UsuarioCreate(BaseModel):
     password: str = Field(default="stringst")
 
     # Validación de los campos (sin renombrar a "username")
-    @field_validator("username")  # Se usa "username" ya que es el campo con el alias
+    @field_validator("nombre")  # Ahora validamos "nombre"
     def validate_nombre(cls, value):
         if len(value) < 2 or len(value) > 50:
             raise ValueError("El nombre debe tener entre 2 y 50 caracteres.")

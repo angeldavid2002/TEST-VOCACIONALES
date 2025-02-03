@@ -36,7 +36,7 @@ def register_user(user: UsuarioCreate):
         # Crear usuario
         nuevo_usuario = Usuario(
             email=user.email,
-            nombre=user.username,  # Usamos 'username' aquí, que es el alias del frontend
+            nombre=user.nombre, 
             sexo=user.sexo,
             contrasena=hashed_password,
             tipo_usuario="comun",
