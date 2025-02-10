@@ -101,9 +101,7 @@ def list_tests_service():
     finally:
         db.close()
 
-#Obtener test por id
-
-
+# Obtener test por id
 def get_test_by_id_service(test_id: int):
     db = next(get_db_session())  # Obtener una sesión
     try:
@@ -151,7 +149,6 @@ def get_test_by_id_service(test_id: int):
         raise HTTPException(status_code=500, detail=f"Error al consultar el test: {str(ex)}")
     finally:
         db.close()  # Cerrar la sesión
-
 
 # eliminar test
 def delete_test_service(test_id: int, current_user):

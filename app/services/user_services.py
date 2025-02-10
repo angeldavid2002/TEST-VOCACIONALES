@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from ..db.database import get_db_session
-from ..models.mdl_user import UsuarioCreate, UsuarioUpdate
+from ..models.mdl_user import PasswordChangeRequest, UsuarioCreate, UsuarioUpdate
 from ..schemas.sch_usuario import Usuario,Ciudad,Institucion
 from .auth_service import *
 
@@ -56,7 +56,7 @@ def register_user(user: UsuarioCreate):
     except Exception as ex:
         # Aquí atrapamos cualquier otra excepción imprevista
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(ex))
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
 def login_user(email: str, password: str):
     db = next(get_db_session())
@@ -85,7 +85,7 @@ def login_user(email: str, password: str):
         raise http_ex
     except Exception as ex:
         # Propagar las excepciones HTTP no manejadas
-        raise HTTPException(status_code=500, detail=str(ex))
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
 def get_user_data_service(current_user):
     # Verificar si el usuario tiene privilegios de acceso
@@ -120,7 +120,7 @@ def get_user_data_service(current_user):
     finally:
         db.close()
 
-def change_password_service(password_request, current_user):
+def change_password_service(password_request:PasswordChangeRequest, current_user):
     db = next(get_db_session())
     try:
         # Buscar al usuario en la base de datos
@@ -168,7 +168,7 @@ def edit_user_service(user_data: UsuarioUpdate, current_user):
         campos_no_editables = {"email", "id", "tipo_usuario", "fecha_registro"}
 
         # Actualizar solo los campos permitidos y proporcionados
-        for key, value in user_data.dict(exclude_unset=True).items():
+        for key, value in user_data.model_dump(exclude_unset=True).items():
             if key not in campos_no_editables:
                 setattr(usuario, key, value)
 

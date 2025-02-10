@@ -165,6 +165,8 @@ def insert_initial_data():
         for ciudad in ciudades:
             if not session.query(Ciudad).filter_by(nombre=ciudad["nombre"]).first():
                 session.add(Ciudad(**ciudad))
+        # Forzar flush para que las ciudades queden persistidas y sean visibles en la siguiente consulta
+        session.flush()
 
         # Insertar instituciones en Valledupar
         valledupar = session.query(Ciudad).filter_by(nombre="Valledupar").first()
@@ -187,12 +189,10 @@ def insert_initial_data():
                 },
             ]
             for institucion in instituciones:
-                if (
-                    not session.query(Institucion)
-                    .filter_by(nombre=institucion["nombre"])
-                    .first()
-                ):
+                if not session.query(Institucion).filter_by(nombre=institucion["nombre"]).first():
                     session.add(Institucion(**institucion))
+        else:
+            print("La ciudad 'Valledupar' no se encontró. No se insertarán las instituciones.")
 
         # Insertar usuario administrador
         if not session.query(Usuario).filter_by(email=config.ADMIN_EMAIL).first():

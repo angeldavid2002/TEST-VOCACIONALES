@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from jose import JWTError, jwt
+from jose import jwt, JWTError, ExpiredSignatureError
 from datetime import datetime, timedelta, timezone
 from ..config import config
 
@@ -19,22 +19,14 @@ def verify_password(plain_password, hashed_password):
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM)
-    
     return encoded_jwt
 
 def verify_jwt_token(token: str):
     try:
         # Decodificar el token
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.ALGORITHM])
-        
-        # Verificar si el token ha expirado
-        exp = payload.get("exp")
-        if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
-            raise HTTPException(status_code=401, detail="El token ha expirado.")
-
         # Extraer la información del usuario del token
         user_info = {
             "user_id": payload.get("user_id"),
@@ -42,10 +34,8 @@ def verify_jwt_token(token: str):
             "tipo_usuario": payload.get("tipo_usuario"),
         }
 
-        # Si no se encuentra el 'user_id', el token es inválido
-        if not user_info["user_id"]:
-            raise HTTPException(status_code=401, detail="Token inválido.")
-
         return user_info
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="El token ha expirado.")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o mal formado.")
