@@ -86,3 +86,71 @@ def create_or_update_vocacion_usuario_service(id_test: int, current_user: dict):
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
+
+def get_vocacion_usuario_por_test_service(id_test: int, current_user: dict):
+    """
+    Retorna la vocación registrada para un usuario en un test específico.
+    """
+    db = next(get_db_session())
+    try:
+        vocacion_usuario = (
+            db.query(VocacionDeUsuarioPorTest)
+            .filter(
+                VocacionDeUsuarioPorTest.id_usuario == current_user["user_id"],
+                VocacionDeUsuarioPorTest.id_test == id_test,
+            )
+            .first()
+        )
+
+        if not vocacion_usuario:
+            raise HTTPException(
+                status_code=404,
+                detail="No se encontró vocación para el test especificado."
+            )
+
+        return {
+            "message": "Vocación encontrada exitosamente.",
+            "data": {
+                "id": vocacion_usuario.id,
+                "id_test": vocacion_usuario.id_test,
+                "moda_vocacion": vocacion_usuario.moda_vocacion
+            }
+        }
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
+    finally:
+        db.close()
+
+
+def get_all_vocaciones_usuario_service(current_user: dict):
+    """
+    Lista todos los tests realizados por el usuario, incluyendo el id del test,
+    nombre del test y la vocación (moda) obtenida.
+    """
+    db = next(get_db_session())
+    try:
+        vocaciones = (
+            db.query(VocacionDeUsuarioPorTest)
+            .filter(VocacionDeUsuarioPorTest.id_usuario == current_user["user_id"])
+            .all()
+        )
+
+        resultados = []
+        for vocacion in vocaciones:
+            # Se asume que el modelo Test tiene un atributo 'nombre'
+            resultados.append({
+                "id_test": vocacion.id_test,
+                "nombre_test": vocacion.test.nombre,
+                "moda_vocacion": vocacion.moda_vocacion
+            })
+
+        return {
+            "message": "Lista de vocaciones obtenida exitosamente.",
+            "data": resultados
+        }
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
+    finally:
+        db.close()
