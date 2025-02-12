@@ -269,5 +269,3 @@ class TestUserServices(unittest.TestCase):
         self.assertEqual(context.exception.status_code, 500)
         self.assertIn("Error interno", context.exception.detail)
 
-if __name__ == '__main__':
-    unittest.main()
