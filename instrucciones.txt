@@ -30,12 +30,10 @@ ejecutar server de uvicorn
 crear descripcion de la base de datos:
     python -m describe_db
 ----------------------------------------------------------------
-Ejecutar pruebas unitarias 1
-    python -m unittest discover -s tests
-ejecutar pruebas sin warnings 2
+ejecutar pruebas sin warnings
     python -W ignore -m unittest discover -s tests
 ----------------------------------------------------------------
-generar informe de covertura 1
+generar informe de covertura
     coverage run -m unittest discover -s tests
     coverage report -m
 ----------------------------------------------------------------
