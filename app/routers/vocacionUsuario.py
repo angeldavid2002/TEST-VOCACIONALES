@@ -15,7 +15,7 @@ router = APIRouter()
 security = HTTPBearer()
 
 # 1. Ruta para crear o actualizar un usuario con vocación
-@router.post("/vocacion-usuario/create-update/{id_test}")
+""" @router.post("/vocacion-usuario/create-update/{id_test}")
 async def create_or_update_vocacion_usuario(
     id_test: int,
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -31,7 +31,7 @@ async def create_or_update_vocacion_usuario(
     except HTTPException as e:
         raise e
     except Exception as ex:
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}") """
 
 # Nuevo endpoint para listar todos los tests realizados por el usuario
 @router.get("/vocacion-usuario/list")

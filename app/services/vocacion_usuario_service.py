@@ -123,7 +123,6 @@ def get_vocacion_usuario_por_test_service(id_test: int, current_user: dict):
     finally:
         db.close()
 
-
 def get_all_vocaciones_usuario_service(current_user: dict):
     """
     Lista todos los tests realizados por el usuario, incluyendo el id del test,

@@ -1,6 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
+
+from ..services.vocacion_usuario_service import create_or_update_vocacion_usuario_service
 from ..schemas.sch_respuesta_usuario import RespuestaDeUsuario
 from ..schemas.sch_test import Test
 from ..schemas.sch_pregunta import Pregunta
@@ -127,10 +129,21 @@ def create_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioCreate, c
         db.commit()
         db.refresh(nueva_respuesta)
 
-        return {
-            "message": "Respuesta creada exitosamente.",
-            "data": {"id": nueva_respuesta.id},
-        }
+        # Verificar si el test está completo
+        total_questions = db.query(Pregunta).filter(Pregunta.test_id == respuesta_data.test_id).count()
+        respuestas = db.query(RespuestaDeUsuario).filter(
+            RespuestaDeUsuario.test_id == respuesta_data.test_id,
+            RespuestaDeUsuario.usuario_id == current_user["user_id"]
+        ).all()
+        if len(respuestas) == total_questions:
+            # Si el test está completo, calcular o actualizar la vocación automáticamente.
+            vocacion_result = create_or_update_vocacion_usuario_service(respuesta_data.test_id, current_user)
+            return {
+                "message": "Respuesta creada y test completado. " + vocacion_result["message"],
+                "data": {"id": nueva_respuesta.id, "vocacion": vocacion_result["data"]}
+            }
+        else:
+            return {"message": "Respuesta creada exitosamente.", "data": {"id": nueva_respuesta.id}}
     except HTTPException as http_ex:
         db.rollback()
         raise http_ex
@@ -143,7 +156,7 @@ def create_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioCreate, c
 
 
 # 4. Editar respuesta de usuario
-def update_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioUpdate,test_id, current_user):
+def update_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioUpdate, test_id, current_user):
     if not current_user:
         raise HTTPException(status_code=401, detail="No está autorizado.")
 
@@ -168,7 +181,20 @@ def update_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioUpdate,te
         respuesta_usuario.respuesta_id = respuesta_data.respuesta_id
         db.commit()
 
-        return {"message": "Respuesta actualizada exitosamente."}
+        # Verificar si el test está completo después de la actualización
+        total_questions = db.query(Pregunta).filter(Pregunta.test_id == test_id).count()
+        respuestas = db.query(RespuestaDeUsuario).filter(
+            RespuestaDeUsuario.test_id == test_id,
+            RespuestaDeUsuario.usuario_id == current_user["user_id"]
+        ).all()
+        if len(respuestas) == total_questions:
+            vocacion_result = create_or_update_vocacion_usuario_service(test_id, current_user)
+            return {
+                "message": "Respuesta actualizada y test completado. " + vocacion_result["message"],
+                "data": {"vocacion": vocacion_result["data"]}
+            }
+        else:
+            return {"message": "Respuesta actualizada exitosamente."}
     except HTTPException as http_ex:
         db.rollback()
         raise http_ex

@@ -1,3 +1,7 @@
+from email.message import EmailMessage
+import secrets
+import smtplib
+import string
 from fastapi import HTTPException
 from ..db.database import get_db_session
 from ..models.mdl_user import PasswordChangeRequest, UsuarioCreate, UsuarioUpdate
@@ -188,6 +192,59 @@ def edit_user_service(user_data: UsuarioUpdate, current_user):
             },
         }
     except HTTPException as http_ex:
+        raise http_ex
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()
+
+def reset_password_service(email: str):
+    db = next(get_db_session())
+    try:
+        # Buscar al usuario por correo electrónico
+        usuario = db.query(Usuario).filter(Usuario.email == email).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="El correo electrónico no está registrado.")
+        
+        # Generar una nueva contraseña aleatoria (por ejemplo, de 10 caracteres)
+        alphabet = string.ascii_letters + string.digits
+        new_password = ''.join(secrets.choice(alphabet) for _ in range(10))
+        
+        # Hashear la nueva contraseña
+        hashed_password = get_password_hash(new_password)
+        
+        # Actualizar la contraseña del usuario en la base de datos
+        usuario.contrasena = hashed_password
+        db.commit()
+        
+        # Construir el mensaje de correo
+        msg = EmailMessage()
+        msg["Subject"] = "Restablecimiento de contraseña"
+        msg["From"] = config.FROM_EMAIL
+        msg["To"] = usuario.email
+        msg.set_content(
+            f"Hola {usuario.nombre},\n\n"
+            f"Tu contraseña ha sido restablecida automáticamente. Tu nueva contraseña es:\n\n"
+            f"{new_password}\n\n"
+            "Te recomendamos cambiarla después de iniciar sesión.\n\n"
+            "Saludos."
+        )
+        
+        # Enviar el correo utilizando SMTP (autenticación básica)
+        try:
+            with smtplib.SMTP(config.SMTP_SERVER, config.SMTP_PORT) as server:
+                server.starttls()
+                server.login(config.SMTP_USERNAME, config.SMTP_PASSWORD)
+                server.send_message(msg)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error al enviar el correo: {str(e)}")
+        
+        return {
+            "message": f"Se ha enviado un correo a {email} con tu nueva contraseña."
+        }
+    except HTTPException as http_ex:
+        db.rollback()
         raise http_ex
     except Exception as ex:
         db.rollback()

@@ -1,5 +1,5 @@
 import re
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from datetime import date
 from typing import Optional
 
@@ -128,3 +128,6 @@ class UsuarioUpdate(BaseModel):
         if value is not None and value <= 0:
             raise ValueError("El ID debe ser un número entero positivo.")
         return value
+
+class RecoverPasswordRequest(BaseModel):
+    email: EmailStr

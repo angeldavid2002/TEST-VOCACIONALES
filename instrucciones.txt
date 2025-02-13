@@ -12,6 +12,14 @@ crear las variables de entorno dentro de la carpeta raiz del proyecto:
         # DATABASE
         DATABASE_URL
         
+        # MAIL CONFIG
+        SMTP_SERVER
+        SMTP_PORT
+        SMTP_USERNAME
+        SMTP_PASSWORD
+        FROM_EMAIL
+        FRONTEND_URL
+
 crear entorno virtual:
     python -m venv .venv
 

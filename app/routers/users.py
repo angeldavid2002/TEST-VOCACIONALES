@@ -65,3 +65,4 @@ async def edit_user(
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
