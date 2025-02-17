@@ -488,3 +488,59 @@ def get_vocation_percentages_service(current_user: dict):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close()
+
+def get_completed_tests_by_test_service(current_user: dict):
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para acceder a esta información."
+        )
+    
+    db = next(get_db_session())
+    try:
+        # Subconsulta: para cada combinación (test, usuario) se cuenta cuántas respuestas ha registrado el usuario
+        # y se obtiene, mediante scalar_subquery, el total de preguntas del test.
+        subq = (
+            db.query(
+                RespuestaDeUsuario.test_id.label("test_id"),
+                RespuestaDeUsuario.usuario_id.label("usuario_id"),
+                func.count(RespuestaDeUsuario.pregunta_id).label("cnt"),
+                db.query(func.count(Pregunta.id))
+                .filter(Pregunta.test_id == RespuestaDeUsuario.test_id)
+                .scalar_subquery().label("total_questions")
+            )
+            .group_by(RespuestaDeUsuario.test_id, RespuestaDeUsuario.usuario_id)
+            .subquery()
+        )
+
+        # Filtrar solo aquellas combinaciones donde el usuario completó el test (cnt == total_questions)
+        completions = (
+            db.query(
+                subq.c.test_id,
+                func.count(subq.c.usuario_id).label("completions")
+            )
+            .filter(subq.c.cnt == subq.c.total_questions)
+            .group_by(subq.c.test_id)
+            .all()
+        )
+
+        # Obtener todos los tests para incluir aquellos sin completions
+        tests = db.query(Test).all()
+        result = []
+        for test in tests:
+            comp = 0
+            for row in completions:
+                if row.test_id == test.id:
+                    comp = row.completions
+                    break
+            result.append({
+                "test_id": test.id,
+                "test_nombre": test.nombre,
+                "completions": comp
+            })
+        return {"data": result}
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()

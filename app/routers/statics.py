@@ -4,6 +4,7 @@ from ..services.statics_service import (
     contar_total_tests,
     count_completed_tests_service,
     count_non_admin_users_service,
+    get_completed_tests_by_test_service,
     get_most_common_vocation_per_gender_service,
     get_most_common_vocation_per_institution_service,
     get_vocation_percentages_service,
@@ -156,7 +157,7 @@ async def get_non_admin_user_count(
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
 
 # 9. cantidad de test completados
-@router.get("/tests/completed")
+@router.get("/user-tests/completed")
 async def count_completed_tests_endpoint(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -179,6 +180,18 @@ async def get_vocation_percentages(credentials: HTTPAuthorizationCredentials = D
         token = credentials.credentials
         user_info = verify_jwt_token(token)
         response = get_vocation_percentages_service(user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
+
+@router.get("/tests/completed")
+async def get_completed_tests_by_test_endpoint(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+        response = get_completed_tests_by_test_service(user_info)
         return response
     except HTTPException as e:
         raise e
