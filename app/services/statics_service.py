@@ -451,3 +451,40 @@ def count_completed_tests_service(current_user: dict):
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
     finally:
         db.close() 
+
+# Servicio de porcentajes de usuarios por vocacion
+def get_vocation_percentages_service(current_user: dict):
+    # Verificar privilegios: solo administradores pueden acceder a esta información
+    if current_user.get("tipo_usuario") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene los privilegios necesarios para acceder a esta información."
+        )
+    
+    db = next(get_db_session())
+    try:
+        # Contar el total de registros en vocaciones
+        total = db.query(func.count(VocacionDeUsuarioPorTest.id)).scalar()
+        if total == 0:
+            return {"data": []}
+        
+        # Agrupar por modalidad de vocación y contar cuántos registros hay por cada una
+        results = db.query(
+            VocacionDeUsuarioPorTest.moda_vocacion,
+            func.count(VocacionDeUsuarioPorTest.id).label("count")
+        ).group_by(VocacionDeUsuarioPorTest.moda_vocacion).all()
+        
+        percentages = []
+        for r in results:
+            # Calcular el porcentaje y redondearlo a entero
+            percentage = int((r.count / total) * 100)
+            percentages.append({
+                "vocation": r.moda_vocacion,
+                "percentage": percentage
+            })
+        return {"data": percentages}
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+    finally:
+        db.close()

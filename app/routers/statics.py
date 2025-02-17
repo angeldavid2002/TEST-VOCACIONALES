@@ -6,6 +6,7 @@ from ..services.statics_service import (
     count_non_admin_users_service,
     get_most_common_vocation_per_gender_service,
     get_most_common_vocation_per_institution_service,
+    get_vocation_percentages_service,
     list_cities_with_users_service,
     list_usuarios_por_institucion_service,
     obtener_moda_vocacion_mas_comun,
@@ -171,3 +172,15 @@ async def count_completed_tests_endpoint(
         raise e
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(ex)}")
+
+@router.get("/vocations/percentages")
+async def get_vocation_percentages(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        token = credentials.credentials
+        user_info = verify_jwt_token(token)
+        response = get_vocation_percentages_service(user_info)
+        return response
+    except HTTPException as e:
+        raise e
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
