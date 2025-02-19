@@ -1,0 +1,28 @@
+Construir la Imagen Docker:
+
+    docker build -t test-vocacionales-backend .
+
+Levantar el Contenedor con Docker Compose:
+
+    docker-compose up --build -d
+
+Verificar que el Backend Funcione:
+
+    http://localhost:8000/docs
+
+Inspeccionar Logs y Estado del Contenedor:
+
+    docker-compose logs backend
+
+ver contenedores:
+
+    docker ps
+
+entrar al contenedor para inspeccionar el entorno:
+
+    docker exec -it <container_id> /bin/sh
+
+detener el contenedor sin eliminarlo:
+
+    docker-compose stop
+

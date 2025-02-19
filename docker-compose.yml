@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Variables de entorno para FastAPI, JWT, SQLite, y otras configuraciones
+      - DATABASE_URL=sqlite:///./database.db
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - HASHING_SCHEMES=${HASHING_SCHEMES}
+      - HASHING_DEPRECATED=${HASHING_DEPRECATED}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_NAME=${ADMIN_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_USER_TYPE=${ADMIN_USER_TYPE}
+      # Configuración SMTP para envío de correos (por ejemplo, para Gmail o Outlook)
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FRONTEND_URL=${FRONTEND_URL}
+    volumes:
+      - ./database.db:/app/database.db

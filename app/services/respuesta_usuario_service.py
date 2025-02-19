@@ -154,7 +154,6 @@ def create_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioCreate, c
         db.close()
 
 
-
 # 4. Editar respuesta de usuario
 def update_respuesta_usuario_service(respuesta_data: RespuestaDeUsuarioUpdate, test_id, current_user):
     if not current_user:

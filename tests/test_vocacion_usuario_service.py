@@ -20,18 +20,23 @@ dummy_test = SimpleNamespace(id=1)
 dummy_pregunta = SimpleNamespace(id=10, test_id=1)
 dummy_response_1 = SimpleNamespace(respuesta_id=100)
 
-# Dummy vocacion existente para update
-dummy_vocacion = SimpleNamespace(id=50, id_usuario=1, id_test=1, moda_vocacion="Old")
+# Dummy vocacion existente para update (incluyendo moda_vocacion2)
+dummy_vocacion = SimpleNamespace(
+    id=50, id_usuario=1, id_test=1, moda_vocacion="Old", moda_vocacion2="Old2"
+)
 
-# Dummy para get_vocacion_usuario_por_test
-dummy_vocacion_record = SimpleNamespace(id=50, id_usuario=1, id_test=1, moda_vocacion="A")
+# Dummy para get_vocacion_usuario_por_test (incluyendo moda_vocacion2)
+dummy_vocacion_record = SimpleNamespace(
+    id=50, id_usuario=1, id_test=1, moda_vocacion="A", moda_vocacion2="B"
+)
 
-# Dummy para get_all_vocaciones_usuario_service, con relación al test
+# Dummy para get_all_vocaciones_usuario_service, con relación al test (incluyendo moda_vocacion2)
 dummy_vocacion_with_test = SimpleNamespace(
     id=60,
     id_usuario=1,
     id_test=1,
     moda_vocacion="A",
+    moda_vocacion2="B",
     test=SimpleNamespace(nombre="Test A")
 )
 
@@ -72,8 +77,7 @@ class TestVocacionUsuarioService(unittest.TestCase):
         query_preguntas = MagicMock()
         query_preguntas.filter.return_value.count.return_value = 2
 
-        # 5. Para cada respuesta en la lista, se realiza una consulta: 
-        # Simulamos una llamada que retorne un mock cuya filter().scalar() devuelva "A"
+        # 5. Para cada respuesta en la lista, se simula una consulta que retorna "A"
         query_respuesta_vocacion = MagicMock()
         query_respuesta_vocacion.filter.return_value.scalar.return_value = "A"
 
@@ -83,7 +87,7 @@ class TestVocacionUsuarioService(unittest.TestCase):
             query_vocacion,      # para VocacionDeUsuarioPorTest
             query_respuestas,    # para RespuestaDeUsuario
             query_preguntas,     # para Pregunta count
-            query_respuesta_vocacion  # para la primera iteración de la lista (ya que solo hay 1 respuesta)
+            query_respuesta_vocacion  # para la primera iteración de la lista (solo hay 1 respuesta)
         ]
         mock_get_db_session.return_value = iter([mock_session])
         
@@ -117,12 +121,12 @@ class TestVocacionUsuarioService(unittest.TestCase):
         query_respuesta_vocacion.filter.return_value.scalar.return_value = "A"
 
         mock_session.query.side_effect = [
-            query_test,          # Test
-            query_vocacion,      # VocacionDeUsuarioPorTest
-            query_respuestas,    # RespuestaDeUsuario
-            query_preguntas,     # Pregunta count
-            query_respuesta_vocacion,  # Para primera respuesta
-            query_respuesta_vocacion   # Para segunda respuesta
+            query_test,          # para Test
+            query_vocacion,      # para VocacionDeUsuarioPorTest
+            query_respuestas,    # para RespuestaDeUsuario
+            query_preguntas,     # para Pregunta count
+            query_respuesta_vocacion,  # para primera respuesta
+            query_respuesta_vocacion   # para segunda respuesta
         ]
         mock_get_db_session.return_value = iter([mock_session])
         
@@ -130,6 +134,7 @@ class TestVocacionUsuarioService(unittest.TestCase):
         self.assertIn("message", result)
         self.assertIn("actualizada", result["message"])
         self.assertEqual(result["data"]["moda_vocacion"], "A")
+        self.assertEqual(result["data"]["moda_vocacion2"], "A")
         mock_session.commit.assert_called_once()
 
     @patch("app.services.vocacion_usuario_service.get_db_session")
@@ -158,12 +163,12 @@ class TestVocacionUsuarioService(unittest.TestCase):
 
         # Secuencia completa de llamadas:
         mock_session.query.side_effect = [
-            query_test,          # Test
-            query_vocacion,      # VocacionDeUsuarioPorTest
-            query_respuestas,    # RespuestaDeUsuario
-            query_preguntas,     # Pregunta count
-            query_respuesta_vocacion,  # Primera respuesta
-            query_respuesta_vocacion   # Segunda respuesta
+            query_test,          # para Test
+            query_vocacion,      # para VocacionDeUsuarioPorTest
+            query_respuestas,    # para RespuestaDeUsuario
+            query_preguntas,     # para Pregunta count
+            query_respuesta_vocacion,  # para primera respuesta
+            query_respuesta_vocacion   # para segunda respuesta
         ]
         # Simular asignación de id en refresh para la nueva vocación
         def refresh_side_effect(instance):
@@ -175,6 +180,7 @@ class TestVocacionUsuarioService(unittest.TestCase):
         self.assertIn("message", result)
         self.assertIn("creada", result["message"])
         self.assertEqual(result["data"]["moda_vocacion"], "A")
+        self.assertEqual(result["data"]["moda_vocacion2"], "A")
         mock_session.commit.assert_called_once()
 
     @patch("app.services.vocacion_usuario_service.get_db_session")
@@ -187,15 +193,19 @@ class TestVocacionUsuarioService(unittest.TestCase):
         self.assertEqual(context.exception.status_code, 500)
         self.assertEqual(context.exception.detail, "Unexpected error")
 
-    # --- Tests para get_vocacion_usuario_por_test_service ---
+    # --- Tests for get_vocacion_usuario_por_test_service ---
     @patch("app.services.vocacion_usuario_service.get_db_session")
     def test_get_vocacion_usuario_por_test_service_success(self, mock_get_db_session):
         mock_session = MagicMock()
-        mock_session.query.return_value.filter.return_value.first.return_value = dummy_vocacion_record
+        dummy_vocacion_record_fixed = SimpleNamespace(
+            id=50, id_usuario=1, id_test=1, moda_vocacion="A", moda_vocacion2="B"
+        )
+        mock_session.query.return_value.filter.return_value.first.return_value = dummy_vocacion_record_fixed
         mock_get_db_session.return_value = iter([mock_session])
         result = get_vocacion_usuario_por_test_service(1, admin_user)
         self.assertIn("message", result)
         self.assertEqual(result["data"]["moda_vocacion"], "A")
+        self.assertEqual(result["data"]["moda_vocacion2"], "B")
 
     @patch("app.services.vocacion_usuario_service.get_db_session")
     def test_get_vocacion_usuario_por_test_service_not_found(self, mock_get_db_session):
@@ -221,12 +231,22 @@ class TestVocacionUsuarioService(unittest.TestCase):
     @patch("app.services.vocacion_usuario_service.get_db_session")
     def test_get_all_vocaciones_usuario_service_success(self, mock_get_db_session):
         mock_session = MagicMock()
-        mock_session.query.return_value.filter.return_value.all.return_value = [dummy_vocacion_with_test]
+        dummy_vocacion_with_test_fixed = SimpleNamespace(
+            id=60,
+            id_usuario=1,
+            id_test=1,
+            moda_vocacion="A",
+            moda_vocacion2="B",
+            test=SimpleNamespace(nombre="Test A")
+        )
+        mock_session.query.return_value.filter.return_value.all.return_value = [dummy_vocacion_with_test_fixed]
         mock_get_db_session.return_value = iter([mock_session])
         result = get_all_vocaciones_usuario_service(admin_user)
         self.assertIn("message", result)
         self.assertIsInstance(result["data"], list)
         self.assertEqual(result["data"][0]["nombre_test"], "Test A")
+        self.assertEqual(result["data"][0]["moda_vocacion"], "A")
+        self.assertEqual(result["data"][0]["moda_vocacion2"], "B")
 
     @patch("app.services.vocacion_usuario_service.get_db_session")
     def test_get_all_vocaciones_usuario_service_unexpected_exception(self, mock_get_db_session):
