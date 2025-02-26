@@ -13,7 +13,8 @@ from .routers import (
     users,
     ciudad,
     recursos,
-    institucion
+    institucion,
+    csv
 )
 
 app = FastAPI()
@@ -31,6 +32,7 @@ app.include_router(users.router, prefix="/users", tags=["Usuarios"])
 app.include_router(ciudad.router, prefix="/city", tags=["Ciudades"])
 app.include_router(recursos.router, prefix="/recurso", tags=["Recursos"])
 app.include_router(institucion.router, prefix="/institucion", tags=["Institucion"])
+app.include_router(csv.router, prefix="/csv", tags=["Csv"])
 
 app.add_middleware(
         CORSMiddleware,
