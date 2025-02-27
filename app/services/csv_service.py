@@ -126,3 +126,44 @@ def get_users_by_city_csv_service(current_user: dict):
         raise HTTPException(status_code=500, detail=str(ex))
     finally:
         db.close()
+
+def get_all_respuestas_by_usuario_csv_service():
+    """
+    Obtiene todas las respuestas de usuario agrupadas de forma plana,
+    es decir, cada fila representa una respuesta junto con los datos del usuario.
+    """
+    db = next(get_db_session())
+    try:
+        results = (
+            db.query(
+                Usuario.id.label("user_id"),
+                Usuario.nombre.label("user_name"),
+                Usuario.email.label("email"),
+                RespuestaDeUsuario.id.label("respuesta_usuario_id"),
+                RespuestaDeUsuario.test_id,
+                RespuestaDeUsuario.pregunta_id,
+                RespuestaDeUsuario.respuesta_id
+            )
+            .join(Usuario, RespuestaDeUsuario.usuario_id == Usuario.id)
+            .order_by(Usuario.id)
+            .all()
+        )
+        output = io.StringIO()
+        writer = csv.writer(output, delimiter=";")
+        # Escribir cabecera
+        writer.writerow(["User ID", "User Name", "Email", "Respuesta Usuario ID", "Test ID", "Pregunta ID", "Respuesta ID"])
+        for row in results:
+            writer.writerow([
+                row.user_id,
+                row.user_name,
+                row.email,
+                row.respuesta_usuario_id,
+                row.test_id,
+                row.pregunta_id,
+                row.respuesta_id
+            ])
+        return output.getvalue()
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
+    finally:
+        db.close()
